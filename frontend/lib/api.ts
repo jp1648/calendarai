@@ -1,0 +1,69 @@
+import { supabase } from "./supabase";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
+  return {
+    Authorization: `Bearer ${session.access_token}`,
+    "Content-Type": "application/json",
+  };
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: { ...headers, ...options.headers },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`API error ${res.status}: ${body}`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export const api = {
+  events: {
+    list: (start?: string, end?: string) => {
+      const params = new URLSearchParams();
+      if (start) params.set("start", start);
+      if (end) params.set("end", end);
+      const qs = params.toString();
+      return request<any[]>(`/api/events${qs ? `?${qs}` : ""}`);
+    },
+    get: (id: string) => request<any>(`/api/events/${id}`),
+    create: (data: any) =>
+      request<any>("/api/events", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: any) =>
+      request<any>(`/api/events/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      request<void>(`/api/events/${id}`, { method: "DELETE" }),
+  },
+  agents: {
+    run: (agent_name: string, input: string) =>
+      request<any>("/api/agents/run", {
+        method: "POST",
+        body: JSON.stringify({ agent_name, input }),
+      }),
+    schedule: (input: string) =>
+      request<any>("/api/agents/schedule", {
+        method: "POST",
+        body: JSON.stringify({ input }),
+      }),
+    available: () => request<any>("/api/agents/available"),
+  },
+  gmail: {
+    getAuthUrl: () => request<{ url: string }>("/api/gmail/auth-url"),
+  },
+};
