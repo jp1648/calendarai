@@ -1,7 +1,27 @@
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
 from pydantic_ai import RunContext
 
 from app.agents.deps import AgentDeps
 from app.agents.core.registry import tool_registry
+
+
+def _ensure_tz(dt_str: str, user_tz: str) -> str:
+    """Ensure datetime has the user's timezone.
+
+    - Naive datetimes → assume user's timezone
+    - UTC datetimes when user isn't in UTC → treat as user-local time
+      (agents often send '15:00:00Z' meaning '3pm local', not '3pm UTC')
+    """
+    dt = datetime.fromisoformat(dt_str)
+    tz = ZoneInfo(user_tz)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+    elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
+        # Agent sent UTC but user isn't in UTC — treat as user-local
+        dt = dt.replace(tzinfo=tz)
+    return dt.isoformat()
 
 
 @tool_registry.register("create_event")
@@ -30,14 +50,15 @@ async def create_event(
         source_ref: Optional reference to source (e.g. Gmail message ID)
         confidence: Confidence score 0-1 for AI-generated events
     """
+    tz = ctx.deps.user_timezone
     sb = ctx.deps.supabase
     row = {
         "user_id": ctx.deps.user_id,
         "title": title,
         "description": description,
         "location": location,
-        "start_time": start_time,
-        "end_time": end_time,
+        "start_time": _ensure_tz(start_time, tz),
+        "end_time": _ensure_tz(end_time, tz),
         "all_day": all_day,
         "source": source,
         "source_ref": source_ref,
@@ -60,13 +81,14 @@ async def check_conflicts(
         start_time: ISO 8601 datetime string for range start
         end_time: ISO 8601 datetime string for range end
     """
+    tz = ctx.deps.user_timezone
     sb = ctx.deps.supabase
     result = (
         sb.table("events")
         .select("id, title, start_time, end_time")
         .eq("user_id", ctx.deps.user_id)
-        .lt("start_time", end_time)
-        .gt("end_time", start_time)
+        .lt("start_time", _ensure_tz(end_time, tz))
+        .gt("end_time", _ensure_tz(start_time, tz))
         .execute()
     )
     return result.data
@@ -82,13 +104,16 @@ async def list_events_for_date(
     Args:
         date: Date in YYYY-MM-DD format
     """
+    tz = ctx.deps.user_timezone
     sb = ctx.deps.supabase
+    day_start = _ensure_tz(f"{date}T00:00:00", tz)
+    day_end = _ensure_tz(f"{date}T23:59:59", tz)
     result = (
         sb.table("events")
         .select("id, title, start_time, end_time, location")
         .eq("user_id", ctx.deps.user_id)
-        .gte("start_time", f"{date}T00:00:00")
-        .lt("start_time", f"{date}T23:59:59")
+        .gte("start_time", day_start)
+        .lt("start_time", day_end)
         .order("start_time")
         .execute()
     )

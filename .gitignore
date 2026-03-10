@@ -27,3 +27,6 @@ frontend/web-build/
 Thumbs.db
 backend/supabase/.temp/
 backend/.claude/
+
+# Screen recordings
+docs/screen-recordings/
