@@ -2,16 +2,17 @@
 
 import asyncio
 import json
+import os
 import httpx
 import pytest
 from supabase import create_client
 
-# --- Config ---
-API_URL = "http://localhost:8000"
-SUPABASE_URL = "https://taspvgyfldmtwgdgovaq.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhc3B2Z3lmbGRtdHdnZGdvdmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTcyMDksImV4cCI6MjA4Nzk5MzIwOX0.pFZOmgcLQ-iPD25L5J8mKix87h_Edgmh_aN2X3_P4gY"
-TEST_EMAIL = "test@calendarai.dev"
-TEST_PASSWORD = "testtest123"
+# --- Config (from environment) ---
+API_URL = os.environ.get("API_URL", "http://localhost:8000")
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_ANON_KEY = os.environ["SUPABASE_ANON_KEY"]
+TEST_EMAIL = os.environ.get("TEST_EMAIL", "test@calendarai.dev")
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "testtest123")
 
 
 @pytest.fixture(scope="module")
