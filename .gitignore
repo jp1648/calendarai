@@ -25,3 +25,5 @@ frontend/web-build/
 # OS
 .DS_Store
 Thumbs.db
+backend/supabase/.temp/
+backend/.claude/

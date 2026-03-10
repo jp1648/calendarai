@@ -10,6 +10,13 @@ class Settings(BaseSettings):
 
     openrouter_api_key: str
 
+    tavily_api_key: str = ""
+    browserbase_api_key: str = ""
+    browserbase_project_id: str = ""
+
+    mindbody_api_key: str = ""
+    mindbody_site_id: str = "-99"  # -99 = sandbox
+
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""

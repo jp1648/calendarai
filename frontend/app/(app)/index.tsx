@@ -7,11 +7,14 @@ import {
   SafeAreaView,
   Modal,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { format, addMonths, subMonths } from "../../lib/dates";
-import { useEvents } from "../../hooks/useEvents";
+import { s, fontSize } from "../../lib/responsive";
+import { useEventsQuery } from "../../hooks/useEventsQuery";
 import MonthView from "../../components/calendar/MonthView";
+import ChatPanel from "../../components/chat/ChatPanel";
 import NaturalLanguageBar from "../../components/input/NaturalLanguageBar";
 
 const MONTHS = [
@@ -23,7 +26,7 @@ export default function CalendarScreen() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
-  const { events, loading, refresh } = useEvents(currentMonth);
+  const { events, loading, refresh } = useEventsQuery(currentMonth);
   const router = useRouter();
 
   const goToPrevMonth = () => setCurrentMonth((m) => subMonths(m, 1));
@@ -50,10 +53,16 @@ export default function CalendarScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "CalendarAI",
+          title: "",
+          headerLeft: () => (
+            <Text style={styles.headerTitle}>CalendarAI</Text>
+          ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push("/(app)/settings")} style={{ marginRight: 16 }}>
-              <Text style={{ color: "#007AFF", fontSize: 16 }}>Settings</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/settings")}
+              style={styles.headerButton}
+            >
+              <Text style={styles.headerButtonText}>Settings</Text>
             </TouchableOpacity>
           ),
         }}
@@ -61,7 +70,7 @@ export default function CalendarScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={goToPrevMonth} style={styles.navButton}>
-            <Text style={styles.navText}>‹</Text>
+            <Text style={styles.navArrow}>‹</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={openPicker}>
             <Text style={styles.monthTitle}>
@@ -69,16 +78,27 @@ export default function CalendarScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={goToNextMonth} style={styles.navButton}>
-            <Text style={styles.navText}>›</Text>
+            <Text style={styles.navArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        <MonthView
-          currentMonth={currentMonth}
-          events={events}
-          onDayPress={onDayPress}
-        />
+        <View style={styles.calendarArea}>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#9CA3AF" />
+            </View>
+          ) : (
+            <MonthView
+              currentMonth={currentMonth}
+              events={events}
+              onDayPress={onDayPress}
+              onNextMonth={goToNextMonth}
+              onPrevMonth={goToPrevMonth}
+            />
+          )}
+        </View>
 
+        <ChatPanel />
         <NaturalLanguageBar onEventCreated={refresh} />
       </SafeAreaView>
 
@@ -127,60 +147,80 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
+  },
+  calendarArea: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: fontSize(17),
+    fontWeight: "700",
+    color: "#1A1A1A",
+    marginLeft: s(4),
+  },
+  headerButton: {
+    marginRight: s(4),
+  },
+  headerButtonText: {
+    color: "#6B7280",
+    fontSize: fontSize(13),
+    fontWeight: "500",
   },
   monthNav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: s(16),
+    paddingVertical: s(6),
   },
   navButton: {
-    padding: 8,
+    padding: s(6),
   },
-  navText: {
-    fontSize: 28,
-    color: "#007AFF",
+  navArrow: {
+    fontSize: fontSize(22),
+    color: "#1A1A1A",
     fontWeight: "300",
   },
   monthTitle: {
-    fontSize: 20,
+    fontSize: fontSize(15),
     fontWeight: "600",
-    color: "#000",
+    color: "#1A1A1A",
+    letterSpacing: -0.3,
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.25)",
     justifyContent: "center",
     alignItems: "center",
   },
   pickerCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    width: 300,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    borderRadius: s(20),
+    padding: s(20),
+    width: s(280),
+    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
     elevation: 8,
-  },
+  } as any,
   yearRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   yearArrow: {
-    fontSize: 24,
-    color: "#007AFF",
-    paddingHorizontal: 12,
+    fontSize: fontSize(22),
+    color: "#1A1A1A",
+    paddingHorizontal: s(12),
   },
   yearText: {
-    fontSize: 20,
+    fontSize: fontSize(17),
     fontWeight: "700",
-    color: "#000",
+    color: "#1A1A1A",
   },
   monthGrid: {
     flexDirection: "row",
@@ -189,19 +229,19 @@ const styles = StyleSheet.create({
   monthCell: {
     width: "25%" as any,
     alignItems: "center" as const,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: s(10),
+    borderRadius: s(10),
   },
   monthCellActive: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1A1A1A",
   },
   monthCellText: {
-    fontSize: 15,
-    color: "#333",
+    fontSize: fontSize(13),
+    color: "#6B7280",
     fontWeight: "500",
   },
   monthCellTextActive: {
     color: "#fff",
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });

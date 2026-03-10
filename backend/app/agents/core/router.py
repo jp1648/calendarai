@@ -66,6 +66,54 @@ _complex = Route(
         "clear my afternoon",
         "show me my busiest day this week",
         "how many hours of meetings do I have",
+        # Web search queries
+        "find the address of the new Italian restaurant downtown and book dinner Friday",
+        "look up when the Taylor Swift concert is and add it to my calendar",
+        "search for the nearest dentist and schedule an appointment",
+        "what time does the Apple store close and schedule a visit",
+        "find events happening this weekend in San Francisco",
+        "search for the conference schedule and block out the sessions",
+        "look up movie showtimes for Friday night",
+        "what are the business hours for the DMV",
+        # Restaurant / food queries
+        "i want to eat mexican food this friday",
+        "find me a good sushi place for dinner",
+        "book a table for 4 at an italian restaurant",
+        "where should we eat tonight",
+        "find a restaurant near union square for tomorrow",
+        "i want to try thai food this weekend",
+        "dinner reservations for 6 people saturday night",
+        "recommend a brunch spot for sunday",
+        # Doctor / medical
+        "schedule a doctor appointment",
+        "find a dermatologist near me",
+        "i need to see a doctor next week",
+        # Dentist
+        "book a dental cleaning",
+        "find a dentist near me",
+        "schedule a teeth cleaning for next thursday",
+        # Haircut / salon
+        "i need a haircut this saturday",
+        "find a barber near downtown",
+        "book a hair appointment",
+        # Auto service
+        "schedule an oil change",
+        "find a mechanic near me",
+        "i need to get my car inspected",
+        # Fitness
+        "book a yoga class tomorrow",
+        "find a spin class near me",
+        "sign me up for pilates this weekend",
+        # Generic booking
+        "book a spa appointment",
+        "schedule a massage for friday",
+        # Social / booking for others
+        "book a dentist for me and Sarah",
+        "find a time that works for me and john@example.com",
+        "schedule lunch with Sarah next week",
+        "when are me and Mike both free",
+        "book a dinner for me and my partner",
+        "set up a meeting with alex@company.com",
     ],
     score_threshold=0.3,
 )

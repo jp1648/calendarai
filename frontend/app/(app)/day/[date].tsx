@@ -1,21 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { parseISO, format, isSameDay } from "../../../lib/dates";
-import { useEventStore, CalendarEvent } from "../../../stores/eventStore";
+import { parseISO, format, isSameDay, addDays, subDays } from "../../../lib/dates";
+import { CalendarEvent } from "../../../stores/eventStore";
+import { useEventsQuery } from "../../../hooks/useEventsQuery";
 import DayView from "../../../components/calendar/DayView";
+import ChatPanel from "../../../components/chat/ChatPanel";
+import NaturalLanguageBar from "../../../components/input/NaturalLanguageBar";
+import { s, fontSize } from "../../../lib/responsive";
 
 export default function DayScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
-  const events = useEventStore((s) => s.events);
   const parsedDate = parseISO(date);
+  const { events, loading, refresh } = useEventsQuery(parsedDate);
 
   const dayEvents = useMemo(
     () =>
@@ -23,21 +27,51 @@ export default function DayScreen() {
     [events, date]
   );
 
+  const onEventPress = useCallback(
+    (event: CalendarEvent) => {
+      router.push(`/(app)/event/${event.id}` as any);
+    },
+    [router]
+  );
+
+  const goToNextDay = useCallback(() => {
+    const next = addDays(parsedDate, 1);
+    router.replace(`/(app)/day/${format(next, "yyyy-MM-dd")}`);
+  }, [parsedDate, router]);
+
+  const goToPrevDay = useCallback(() => {
+    const prev = subDays(parsedDate, 1);
+    router.replace(`/(app)/day/${format(prev, "yyyy-MM-dd")}`);
+  }, [parsedDate, router]);
+
   return (
     <>
       <Stack.Screen
         options={{
           title: format(parsedDate, "EEEE, MMM d"),
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push("/(app)/event/new")} style={{ marginRight: 16 }}>
-              <Text style={{ color: "#007AFF", fontSize: 16 }}>+ New</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/event/new")}
+              style={styles.headerButton}
+            >
+              <Text style={styles.headerButtonText}>+ New</Text>
             </TouchableOpacity>
           ),
         }}
       />
-      <View style={styles.container}>
-        <DayView date={parsedDate} events={dayEvents} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <DayView
+          date={parsedDate}
+          events={dayEvents}
+          onEventPress={onEventPress}
+          onNextDay={goToNextDay}
+          onPrevDay={goToPrevDay}
+          refreshing={loading}
+          onRefresh={refresh}
+        />
+        <ChatPanel />
+        <NaturalLanguageBar onEventCreated={refresh} />
+      </SafeAreaView>
     </>
   );
 }
@@ -45,6 +79,14 @@ export default function DayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
+  },
+  headerButton: {
+    marginRight: s(4),
+  },
+  headerButtonText: {
+    color: "#1A1A1A",
+    fontSize: fontSize(15),
+    fontWeight: "600",
   },
 });

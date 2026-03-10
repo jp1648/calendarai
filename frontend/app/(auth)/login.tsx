@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
+import { s, fontSize } from "../../lib/responsive";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -36,41 +37,46 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>CalendarAI</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>CalendarAI</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#999"
-        />
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholderTextColor="#9CA3AF"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#9CA3AF"
+          />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Signing in..." : "Sign In"}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Signing in..." : "Sign in"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Link href="/(auth)/signup" asChild>
           <TouchableOpacity style={styles.linkButton}>
             <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkBold}>Sign up</Text>
+              Don't have an account?{" "}
+              <Text style={styles.linkBold}>Sign up</Text>
             </Text>
           </TouchableOpacity>
         </Link>
@@ -82,61 +88,64 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
   },
   inner: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: s(28),
+  },
+  header: {
+    marginBottom: s(40),
   },
   title: {
-    fontSize: 32,
+    fontSize: fontSize(32),
     fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 4,
-    color: "#000",
+    color: "#1A1A1A",
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 32,
+    fontSize: fontSize(16),
+    color: "#9CA3AF",
+    marginTop: s(4),
+  },
+  form: {
+    gap: s(12),
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 12,
-    backgroundColor: "#F9F9F9",
-    color: "#000",
+    borderColor: "#E5E7EB",
+    borderRadius: s(14),
+    padding: s(16),
+    fontSize: fontSize(16),
+    backgroundColor: "#FFFFFF",
+    color: "#1A1A1A",
   },
   button: {
-    backgroundColor: "#007AFF",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#1A1A1A",
+    borderRadius: s(14),
+    padding: s(16),
     alignItems: "center",
-    marginTop: 8,
+    marginTop: s(4),
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: fontSize(16),
     fontWeight: "600",
   },
   linkButton: {
-    marginTop: 16,
+    marginTop: s(24),
     alignItems: "center",
   },
   linkText: {
-    color: "#666",
-    fontSize: 14,
+    color: "#9CA3AF",
+    fontSize: fontSize(14),
   },
   linkBold: {
-    color: "#007AFF",
+    color: "#1A1A1A",
     fontWeight: "600",
   },
 });

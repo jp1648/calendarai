@@ -18,7 +18,15 @@ dependencies = [
     "python-dotenv>=1.0",
     "semantic-router>=0.1",
     "sentence-transformers>=5.0",
+    "tavily-python>=0.5",
+    "browserbase>=1.0",
+    "playwright>=1.40",
+    "stagehand>=3.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [build-system]
 requires = ["hatchling"]
@@ -26,3 +34,11 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "respx>=0.22.0",
+]

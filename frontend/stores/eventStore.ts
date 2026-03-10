@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
+import { parseISO, isWithinInterval } from "../lib/dates";
 
 export interface CalendarEvent {
   id: string;
@@ -23,6 +24,7 @@ interface EventStore {
   events: CalendarEvent[];
   loading: boolean;
   error: string | null;
+  currentRange: { start: Date; end: Date } | null;
   fetchEvents: (start?: string, end?: string) => Promise<void>;
   addEvent: (event: CalendarEvent) => void;
   removeEvent: (id: string) => void;
@@ -33,9 +35,15 @@ export const useEventStore = create<EventStore>((set, get) => ({
   events: [],
   loading: false,
   error: null,
+  currentRange: null,
 
   fetchEvents: async (start?: string, end?: string) => {
-    set({ loading: true, error: null });
+    set({
+      loading: true,
+      error: null,
+      currentRange:
+        start && end ? { start: parseISO(start), end: parseISO(end) } : null,
+    });
     try {
       const events = await api.events.list(start, end);
       set({ events, loading: false });
@@ -47,6 +55,18 @@ export const useEventStore = create<EventStore>((set, get) => ({
   addEvent: (event) => {
     set((state) => {
       if (state.events.find((e) => e.id === event.id)) return state;
+      // Only add if within current view range
+      if (state.currentRange) {
+        const eventStart = parseISO(event.start_time);
+        if (
+          !isWithinInterval(eventStart, {
+            start: state.currentRange.start,
+            end: state.currentRange.end,
+          })
+        ) {
+          return state;
+        }
+      }
       return { events: [...state.events, event] };
     });
   },

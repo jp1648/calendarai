@@ -1,7 +1,23 @@
+import json
 import time
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
+from uuid import uuid4
 from zoneinfo import ZoneInfo
+
+from pydantic import TypeAdapter
+from pydantic_ai.messages import (
+    ModelMessage,
+    PartStartEvent,
+    PartDeltaEvent,
+    TextPart,
+    TextPartDelta,
+    FunctionToolCallEvent,
+    FunctionToolResultEvent,
+)
+from pydantic_ai._agent_graph import ModelRequestNode, CallToolsNode
+from pydantic_graph import End
 
 from app.agents.deps import AgentDeps
 from app.agents.core.schemas import (
@@ -11,9 +27,12 @@ from app.agents.core.schemas import (
     TriggerMode,
 )
 from app.agents.core.registry import agent_registry
+from app.auth.rate_limit import update_token_usage
 from app.services.supabase import get_supabase_admin
 
 logger = logging.getLogger("calendarai.agents")
+
+_messages_ta = TypeAdapter(list[ModelMessage])
 
 
 class AgentRunner:
@@ -28,6 +47,18 @@ class AgentRunner:
         )
     """
 
+    async def _cleanup_browser(self, deps: AgentDeps) -> None:
+        """End Stagehand browser session if one was created during this run."""
+        if deps._stagehand_client and deps.browser_session_id:
+            try:
+                await deps._stagehand_client.sessions.end(deps.browser_session_id)
+                logger.info("browser session ended id=%s", deps.browser_session_id)
+            except Exception as e:
+                logger.warning("browser cleanup failed: %s", str(e)[:200])
+            finally:
+                deps.browser_session_id = None
+                deps._stagehand_client = None
+
     async def build_deps(
         self,
         user_id: str,
@@ -38,17 +69,21 @@ class AgentRunner:
         sb = get_supabase_admin()
         profile = (
             sb.table("profiles")
-            .select("timezone")
+            .select("timezone, full_name, phone, default_location")
             .eq("id", user_id)
             .single()
             .execute()
         )
-        tz = profile.data["timezone"] if profile.data else "America/New_York"
+        data = profile.data or {}
+        tz = data.get("timezone", "America/New_York")
 
         return AgentDeps(
             user_id=user_id,
             user_email=user_email,
             user_timezone=tz,
+            user_full_name=data.get("full_name", ""),
+            user_phone=data.get("phone", ""),
+            user_default_location=data.get("default_location", ""),
             supabase=sb,
             gmail_credentials=gmail_credentials,
         )
@@ -69,14 +104,22 @@ class AgentRunner:
         # Log the run
         run_id = self._log_start(sb, user_id, request, config.model)
 
-        # Inject current time context so the agent doesn't waste a tool call
+        # Inject current time + profile context
         tz = ZoneInfo(deps.user_timezone)
         now = datetime.now(tz)
-        user_input = (
-            f"[Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')} | "
-            f"Timezone: {deps.user_timezone} | ISO: {now.isoformat()}]\n\n"
-            f"{request.input}"
-        )
+        context_parts = [
+            f"Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')}",
+            f"Timezone: {deps.user_timezone}",
+            f"ISO: {now.isoformat()}",
+        ]
+        if deps.user_default_location:
+            context_parts.append(f"User location: {deps.user_default_location}")
+        if deps.user_full_name:
+            context_parts.append(f"User name: {deps.user_full_name}")
+        if deps.user_phone:
+            context_parts.append(f"User phone: {deps.user_phone}")
+        context_parts.append(f"User email: {deps.user_email}")
+        user_input = f"[{' | '.join(context_parts)}]\n\n{request.input}"
 
         start = time.monotonic()
         try:
@@ -129,6 +172,133 @@ class AgentRunner:
                 model_used=config.model,
             )
 
+        finally:
+            await self._cleanup_browser(deps)
+
+    async def run_stream(
+        self,
+        input_text: str,
+        agent_name: str,
+        user_id: str,
+        user_email: str,
+        thread_id: str | None = None,
+        gmail_credentials=None,
+        location: str | None = None,
+    ) -> AsyncGenerator[str, None]:
+        """Execute an agent with SSE streaming output."""
+        config = agent_registry.get_config(agent_name)
+        agent = agent_registry.get(agent_name)
+        deps = await self.build_deps(user_id, user_email, gmail_credentials)
+        sb = deps.supabase
+
+        # Load or create thread
+        history: list[ModelMessage] = []
+        if thread_id:
+            history = _load_thread(sb, thread_id)
+        else:
+            thread_id = str(uuid4())
+
+        yield f"event: thread\ndata: {json.dumps({'thread_id': thread_id})}\n\n"
+
+        # Inject current time + location + profile context
+        tz = ZoneInfo(deps.user_timezone)
+        now = datetime.now(tz)
+        context_parts = [
+            f"Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')}",
+            f"Timezone: {deps.user_timezone}",
+            f"ISO: {now.isoformat()}",
+        ]
+        if location:
+            context_parts.append(f"User location: {location}")
+        elif deps.user_default_location:
+            context_parts.append(f"User location: {deps.user_default_location}")
+        if deps.user_full_name:
+            context_parts.append(f"User name: {deps.user_full_name}")
+        if deps.user_phone:
+            context_parts.append(f"User phone: {deps.user_phone}")
+        context_parts.append(f"User email: {deps.user_email}")
+        user_input = f"[{' | '.join(context_parts)}]\n\n{input_text}"
+
+        request = AgentRequest(agent_name=agent_name, input=input_text)
+        run_id = self._log_start(sb, user_id, request, config.model)
+        run_start = datetime.now(timezone.utc).isoformat()
+
+        start = time.monotonic()
+        tokens = None
+        try:
+            async with agent.iter(
+                user_input, deps=deps, message_history=history
+            ) as agent_run:
+                async for node in agent_run:
+                    if isinstance(node, ModelRequestNode):
+                        # Stream text deltas from the model in real-time
+                        async with node.stream(agent_run.ctx) as agent_stream:
+                            async for event in agent_stream:
+                                if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart) and event.part.content:
+                                    yield f"event: text_delta\ndata: {json.dumps({'delta': event.part.content})}\n\n"
+                                elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
+                                    yield f"event: text_delta\ndata: {json.dumps({'delta': event.delta.content_delta})}\n\n"
+
+                    elif isinstance(node, CallToolsNode):
+                        # Stream tool calls and results as they execute
+                        async with node.stream(agent_run.ctx) as tool_events:
+                            async for event in tool_events:
+                                if isinstance(event, FunctionToolCallEvent):
+                                    yield (
+                                        f"event: tool_call\n"
+                                        f"data: {json.dumps({'tool': event.part.tool_name, 'args': event.part.args_as_dict()})}\n\n"
+                                    )
+                                elif isinstance(event, FunctionToolResultEvent):
+                                    content = ""
+                                    if hasattr(event.result, 'content') and event.result.content:
+                                        content = str(event.result.content)[:200]
+                                    tool_name = getattr(event.result, 'tool_name', "")
+                                    yield (
+                                        f"event: tool_result\n"
+                                        f"data: {json.dumps({'tool': tool_name, 'summary': content})}\n\n"
+                                    )
+
+                    elif isinstance(node, End):
+                        break
+
+                # Save thread with full conversation
+                all_messages = agent_run.all_messages()
+                _save_thread(sb, thread_id, user_id, all_messages)
+
+                # Token usage
+                try:
+                    tokens = agent_run.usage().total_tokens
+                except Exception:
+                    pass
+
+                if tokens:
+                    update_token_usage(user_id, tokens)
+
+            elapsed = time.monotonic() - start
+
+            # Fetch events created during this turn
+            events = self._fetch_created_events(
+                sb, user_id, agent_name, since=run_start
+            )
+            self._log_complete(sb, run_id, "", len(events), tokens)
+
+            logger.info(
+                "agent=%s status=streamed events=%d tokens=%s elapsed=%.2fs",
+                agent_name, len(events), tokens, elapsed,
+            )
+
+            yield f"event: done\ndata: {json.dumps({'events_created': events, 'run_id': run_id})}\n\n"
+
+        except Exception as e:
+            self._log_fail(sb, run_id, str(e))
+            logger.error(
+                "agent=%s status=stream_failed error=%s", agent_name, str(e)[:200]
+            )
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+        finally:
+            await self._cleanup_browser(deps)
+
     # -- Observability helpers --
 
     def _log_start(self, sb, user_id: str, request: AgentRequest, model: str) -> str:
@@ -158,7 +328,9 @@ class AgentRunner:
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }).eq("id", run_id).execute()
 
-    def _fetch_created_events(self, sb, user_id: str, agent_name: str, start_time: float) -> list[dict]:
+    def _fetch_created_events(
+        self, sb, user_id: str, agent_name: str, start_time: float = 0, since: str | None = None,
+    ) -> list[dict]:
         """Fetch events created by this agent run (most recent, matching source)."""
         source_map = {
             "smart_scheduler": "schedule_agent",
@@ -169,13 +341,44 @@ class AgentRunner:
         if not source:
             return []
 
-        result = (
+        query = (
             sb.table("events")
             .select("*")
             .eq("user_id", user_id)
             .eq("source", source)
-            .order("created_at", desc=True)
-            .limit(5)
-            .execute()
         )
+        if since:
+            query = query.gte("created_at", since)
+
+        result = query.order("created_at", desc=True).limit(5).execute()
         return result.data
+
+
+# -- Thread storage helpers --
+
+def _load_thread(sb, thread_id: str) -> list[ModelMessage]:
+    """Load conversation history from agent_threads table."""
+    result = (
+        sb.table("agent_threads")
+        .select("messages")
+        .eq("id", thread_id)
+        .maybe_single()
+        .execute()
+    )
+    if not result.data:
+        return []
+    raw = result.data["messages"]
+    if isinstance(raw, str):
+        return _messages_ta.validate_json(raw)
+    return _messages_ta.validate_python(raw)
+
+
+def _save_thread(sb, thread_id: str, user_id: str, messages: list[ModelMessage]):
+    """Save conversation history to agent_threads table."""
+    serialized = json.loads(_messages_ta.dump_json(messages))
+    sb.table("agent_threads").upsert({
+        "id": thread_id,
+        "user_id": user_id,
+        "messages": serialized,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()

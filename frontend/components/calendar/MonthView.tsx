@@ -1,5 +1,12 @@
 import { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 import {
   getCalendarDays,
   isSameDay,
@@ -7,19 +14,63 @@ import {
   format,
   parseISO,
 } from "../../lib/dates";
+import { s, fontSize } from "../../lib/responsive";
 import { CalendarEvent } from "../../stores/eventStore";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
+const SWIPE_THRESHOLD = 50;
+
+const DOT_COLORS: Record<string, string> = {
+  manual: "#3B82F6",
+  email_agent: "#EC4899",
+  schedule_agent: "#8B5CF6",
+};
 
 interface Props {
   currentMonth: Date;
   events: CalendarEvent[];
   onDayPress: (date: Date) => void;
+  onNextMonth?: () => void;
+  onPrevMonth?: () => void;
 }
 
-export default function MonthView({ currentMonth, events, onDayPress }: Props) {
+function chunkWeeks(days: Date[]): Date[][] {
+  const weeks: Date[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+  return weeks;
+}
+
+export default function MonthView({
+  currentMonth,
+  events,
+  onDayPress,
+  onNextMonth,
+  onPrevMonth,
+}: Props) {
   const days = useMemo(() => getCalendarDays(currentMonth), [currentMonth]);
+  const weeks = useMemo(() => chunkWeeks(days), [days]);
   const today = new Date();
+  const translateX = useSharedValue(0);
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .onUpdate((e) => {
+      translateX.value = e.translationX * 0.4;
+    })
+    .onEnd((e) => {
+      if (e.translationX < -SWIPE_THRESHOLD && onNextMonth) {
+        runOnJS(onNextMonth)();
+      } else if (e.translationX > SWIPE_THRESHOLD && onPrevMonth) {
+        runOnJS(onPrevMonth)();
+      }
+      translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -32,122 +83,113 @@ export default function MonthView({ currentMonth, events, onDayPress }: Props) {
   }, [events]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.weekdayRow}>
-        {WEEKDAYS.map((d) => (
-          <View key={d} style={styles.weekdayCell}>
-            <Text style={styles.weekdayText}>{d}</Text>
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={[styles.container, animatedStyle]}>
+        <View style={styles.weekdayRow}>
+          {WEEKDAYS.map((d, i) => (
+            <View key={i} style={styles.weekdayCell}>
+              <Text style={styles.weekdayText}>{d}</Text>
+            </View>
+          ))}
+        </View>
+
+        {weeks.map((week, wi) => (
+          <View key={wi} style={styles.weekRow}>
+            {week.map((day, di) => {
+              const key = format(day, "yyyy-MM-dd");
+              const dayEvents = eventsByDay.get(key) || [];
+              const isToday = isSameDay(day, today);
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+
+              const dotColors = [
+                ...new Set(
+                  dayEvents.map((e) => DOT_COLORS[e.source] || DOT_COLORS.manual),
+                ),
+              ].slice(0, 3);
+
+              return (
+                <TouchableOpacity
+                  key={di}
+                  style={styles.dayCell}
+                  onPress={() => onDayPress(day)}
+                  activeOpacity={0.5}
+                >
+                  <View
+                    style={[styles.dayNumber, isToday && styles.todayCircle]}
+                  >
+                    <Text
+                      style={[
+                        styles.dayText,
+                        !isCurrentMonth && styles.dimText,
+                        isToday && styles.todayText,
+                      ]}
+                    >
+                      {format(day, "d")}
+                    </Text>
+                  </View>
+                  <View style={styles.dotRow}>
+                    {dotColors.map((color, ci) => (
+                      <View
+                        key={ci}
+                        style={[styles.dot, { backgroundColor: color }]}
+                      />
+                    ))}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ))}
-      </View>
-
-      <View style={styles.grid}>
-        {days.map((day, i) => {
-          const key = format(day, "yyyy-MM-dd");
-          const dayEvents = eventsByDay.get(key) || [];
-          const isToday = isSameDay(day, today);
-          const isCurrentMonth = isSameMonth(day, currentMonth);
-          const hasAgent = dayEvents.some((e) => e.source !== "manual");
-
-          return (
-            <TouchableOpacity
-              key={i}
-              style={styles.dayCell}
-              onPress={() => onDayPress(day)}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[styles.dayNumber, isToday && styles.todayCircle]}
-              >
-                <Text
-                  style={[
-                    styles.dayText,
-                    !isCurrentMonth && styles.dimText,
-                    isToday && styles.todayText,
-                  ]}
-                >
-                  {format(day, "d")}
-                </Text>
-              </View>
-              <View style={styles.dotRow}>
-                {dayEvents.length > 0 && (
-                  <View
-                    style={[
-                      styles.dot,
-                      hasAgent ? styles.dotBlue : styles.dotGray,
-                    ]}
-                  />
-                )}
-                {dayEvents.length > 1 && (
-                  <View
-                    style={[
-                      styles.dot,
-                      styles.dotGray,
-                    ]}
-                  />
-                )}
-                {dayEvents.length > 2 && (
-                  <View
-                    style={[
-                      styles.dot,
-                      styles.dotGray,
-                    ]}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: s(4),
   },
   weekdayRow: {
     flexDirection: "row",
-    marginBottom: 4,
+    marginBottom: s(2),
   },
   weekdayCell: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: s(4),
   },
   weekdayText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#999",
+    fontSize: fontSize(11),
+    fontWeight: "500",
+    color: "#9CA3AF",
+    letterSpacing: 0.5,
   },
-  grid: {
+  weekRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
   },
   dayCell: {
-    width: "14.28%",
+    flex: 1,
     alignItems: "center",
-    paddingVertical: 6,
-    minHeight: 52,
+    paddingVertical: s(3),
+    minHeight: s(40),
   },
   dayNumber: {
-    width: 32,
-    height: 32,
+    width: s(30),
+    height: s(30),
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: s(15),
   },
   dayText: {
-    fontSize: 16,
-    color: "#000",
+    fontSize: fontSize(13),
+    color: "#1A1A1A",
+    fontWeight: "400",
   },
   dimText: {
-    color: "#CCC",
+    color: "#D1D5DB",
   },
   todayCircle: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1A1A1A",
   },
   todayText: {
     color: "#fff",
@@ -155,19 +197,13 @@ const styles = StyleSheet.create({
   },
   dotRow: {
     flexDirection: "row",
-    gap: 3,
-    marginTop: 2,
-    height: 6,
+    gap: s(2),
+    marginTop: s(2),
+    height: s(4),
   },
   dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  dotGray: {
-    backgroundColor: "#CCC",
-  },
-  dotBlue: {
-    backgroundColor: "#007AFF",
+    width: s(4),
+    height: s(4),
+    borderRadius: s(2),
   },
 });

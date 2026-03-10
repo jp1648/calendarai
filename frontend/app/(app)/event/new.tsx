@@ -4,14 +4,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   Alert,
-  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { api } from "../../../lib/api";
 import { useEventStore } from "../../../stores/eventStore";
+import { format, parseISO } from "../../../lib/dates";
+import DatePickerModal from "../../../components/input/DatePickerModal";
+import TimePickerModal from "../../../components/input/TimePickerModal";
+import { s, fontSize } from "../../../lib/responsive";
 
 export default function NewEventScreen() {
   const router = useRouter();
@@ -24,6 +28,10 @@ export default function NewEventScreen() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [startPickerOpen, setStartPickerOpen] = useState(false);
+  const [endPickerOpen, setEndPickerOpen] = useState(false);
 
   const handleCreate = async () => {
     if (!title || !date || !startTime || !endTime) {
@@ -48,6 +56,14 @@ export default function NewEventScreen() {
     }
   };
 
+  const formatDisplayTime = (time: string) => {
+    if (!time) return "";
+    const [h, m] = time.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.label}>Title</Text>
@@ -56,7 +72,7 @@ export default function NewEventScreen() {
         value={title}
         onChangeText={setTitle}
         placeholder="Event title"
-        placeholderTextColor="#999"
+        placeholderTextColor="#9CA3AF"
       />
 
       <Text style={styles.label}>Description</Text>
@@ -66,7 +82,7 @@ export default function NewEventScreen() {
         onChangeText={setDescription}
         placeholder="Optional description"
         multiline
-        placeholderTextColor="#999"
+        placeholderTextColor="#9CA3AF"
       />
 
       <Text style={styles.label}>Location</Text>
@@ -75,38 +91,32 @@ export default function NewEventScreen() {
         value={location}
         onChangeText={setLocation}
         placeholder="Optional location"
-        placeholderTextColor="#999"
+        placeholderTextColor="#9CA3AF"
       />
 
       <Text style={styles.label}>Date</Text>
-      <TextInput
-        style={styles.input}
-        value={date}
-        onChangeText={setDate}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor="#999"
-      />
+      <Pressable style={styles.pickerField} onPress={() => setDatePickerOpen(true)}>
+        <Text style={[styles.pickerText, !date && styles.placeholderText]}>
+          {date ? format(parseISO(date), "EEEE, MMM d, yyyy") : "Select date"}
+        </Text>
+      </Pressable>
 
       <View style={styles.row}>
         <View style={styles.halfField}>
           <Text style={styles.label}>Start Time</Text>
-          <TextInput
-            style={styles.input}
-            value={startTime}
-            onChangeText={setStartTime}
-            placeholder="HH:MM"
-            placeholderTextColor="#999"
-          />
+          <Pressable style={styles.pickerField} onPress={() => setStartPickerOpen(true)}>
+            <Text style={[styles.pickerText, !startTime && styles.placeholderText]}>
+              {startTime ? formatDisplayTime(startTime) : "Start"}
+            </Text>
+          </Pressable>
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>End Time</Text>
-          <TextInput
-            style={styles.input}
-            value={endTime}
-            onChangeText={setEndTime}
-            placeholder="HH:MM"
-            placeholderTextColor="#999"
-          />
+          <Pressable style={styles.pickerField} onPress={() => setEndPickerOpen(true)}>
+            <Text style={[styles.pickerText, !endTime && styles.placeholderText]}>
+              {endTime ? formatDisplayTime(endTime) : "End"}
+            </Text>
+          </Pressable>
         </View>
       </View>
 
@@ -119,6 +129,25 @@ export default function NewEventScreen() {
           {loading ? "Creating..." : "Create Event"}
         </Text>
       </TouchableOpacity>
+
+      <DatePickerModal
+        visible={datePickerOpen}
+        value={date ? parseISO(date) : new Date()}
+        onSelect={(d) => setDate(format(d, "yyyy-MM-dd"))}
+        onClose={() => setDatePickerOpen(false)}
+      />
+      <TimePickerModal
+        visible={startPickerOpen}
+        value={startTime || "09:00"}
+        onSelect={setStartTime}
+        onClose={() => setStartPickerOpen(false)}
+      />
+      <TimePickerModal
+        visible={endPickerOpen}
+        value={endTime || "10:00"}
+        onSelect={setEndTime}
+        onClose={() => setEndPickerOpen(false)}
+      />
     </ScrollView>
   );
 }
@@ -126,51 +155,65 @@ export default function NewEventScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
   },
   content: {
-    padding: 24,
+    padding: s(24),
   },
   label: {
-    fontSize: 14,
+    fontSize: fontSize(13),
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 6,
-    marginTop: 12,
+    color: "#6B7280",
+    marginBottom: s(6),
+    marginTop: s(16),
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: "#F9F9F9",
-    color: "#000",
+    borderColor: "#E5E7EB",
+    borderRadius: s(14),
+    padding: s(16),
+    fontSize: fontSize(16),
+    backgroundColor: "#FFFFFF",
+    color: "#1A1A1A",
   },
   multiline: {
-    minHeight: 80,
+    minHeight: s(80),
     textAlignVertical: "top",
+  },
+  pickerField: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: s(14),
+    padding: s(16),
+    backgroundColor: "#FFFFFF",
+  },
+  pickerText: {
+    fontSize: fontSize(16),
+    color: "#1A1A1A",
+  },
+  placeholderText: {
+    color: "#9CA3AF",
   },
   row: {
     flexDirection: "row",
-    gap: 12,
+    gap: s(12),
   },
   halfField: {
     flex: 1,
   },
   button: {
-    backgroundColor: "#007AFF",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#1A1A1A",
+    borderRadius: s(14),
+    padding: s(16),
     alignItems: "center",
-    marginTop: 24,
+    marginTop: s(28),
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: fontSize(16),
     fontWeight: "600",
   },
 });

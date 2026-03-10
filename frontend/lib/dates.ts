@@ -9,7 +9,10 @@ import {
   isSameMonth,
   addMonths,
   subMonths,
+  addDays,
+  subDays,
   parseISO,
+  isWithinInterval,
 } from "date-fns";
 
 export {
@@ -23,7 +26,10 @@ export {
   isSameMonth,
   addMonths,
   subMonths,
+  addDays,
+  subDays,
   parseISO,
+  isWithinInterval,
 };
 
 export function getCalendarDays(date: Date): Date[] {

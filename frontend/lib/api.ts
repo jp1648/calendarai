@@ -61,9 +61,38 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ input }),
       }),
+    scheduleStream: async (input: string, thread_id?: string | null) => {
+      const headers = await getAuthHeaders();
+      return fetch(`${API_URL}/api/agents/schedule/stream`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ input, thread_id }),
+      });
+    },
     available: () => request<any>("/api/agents/available"),
   },
   gmail: {
     getAuthUrl: () => request<{ url: string }>("/api/gmail/auth-url"),
+  },
+  profile: {
+    get: () =>
+      request<{
+        full_name: string;
+        phone: string;
+        timezone: string;
+        default_location: string;
+        email: string;
+        gmail_connected: boolean;
+      }>("/api/profile"),
+    update: (data: {
+      full_name?: string;
+      phone?: string;
+      timezone?: string;
+      default_location?: string;
+    }) =>
+      request<any>("/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
   },
 };

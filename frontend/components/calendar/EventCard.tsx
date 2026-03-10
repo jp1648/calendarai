@@ -1,24 +1,26 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { CalendarEvent } from "../../stores/eventStore";
-import { formatTime, parseISO } from "../../lib/dates";
+import { formatTime } from "../../lib/dates";
+import { s, fontSize } from "../../lib/responsive";
 import AgentBadge from "./AgentBadge";
 
 interface Props {
   event: CalendarEvent;
   compact?: boolean;
+  onPress?: (event: CalendarEvent) => void;
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  manual: "#007AFF",
-  email_agent: "#AF52DE",
-  schedule_agent: "#5AC8FA",
+  manual: "#3B82F6",
+  email_agent: "#EC4899",
+  schedule_agent: "#8B5CF6",
 };
 
-export default function EventCard({ event, compact }: Props) {
+export default function EventCard({ event, compact, onPress }: Props) {
   const color = SOURCE_COLORS[event.source] || SOURCE_COLORS.manual;
 
-  return (
-    <View style={[styles.card, { backgroundColor: color + "18", borderLeftColor: color }]}>
+  const card = (
+    <View style={[styles.card, { backgroundColor: color + "10", borderLeftColor: color }]}>
       <View style={styles.header}>
         <Text style={[styles.title, compact && styles.titleCompact]} numberOfLines={1}>
           {event.title}
@@ -27,7 +29,7 @@ export default function EventCard({ event, compact }: Props) {
       </View>
       {!compact && (
         <Text style={styles.time}>
-          {formatTime(event.start_time)} - {formatTime(event.end_time)}
+          {formatTime(event.start_time)} – {formatTime(event.end_time)}
         </Text>
       )}
       {!compact && event.location ? (
@@ -37,37 +39,47 @@ export default function EventCard({ event, compact }: Props) {
       ) : null}
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.6} onPress={() => onPress(event)}>
+        {card}
+      </TouchableOpacity>
+    );
+  }
+
+  return card;
 }
 
 const styles = StyleSheet.create({
   card: {
     borderLeftWidth: 3,
-    borderRadius: 6,
-    padding: 8,
+    borderRadius: s(8),
+    padding: s(8),
     flex: 1,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: s(4),
   },
   title: {
-    fontSize: 14,
+    fontSize: fontSize(13),
     fontWeight: "600",
-    color: "#000",
+    color: "#1A1A1A",
     flex: 1,
   },
   titleCompact: {
-    fontSize: 12,
+    fontSize: fontSize(11),
   },
   time: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
+    fontSize: fontSize(11),
+    color: "#6B7280",
+    marginTop: s(2),
   },
   location: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 2,
+    fontSize: fontSize(11),
+    color: "#9CA3AF",
+    marginTop: s(1),
   },
 });

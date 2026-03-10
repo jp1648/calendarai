@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.auth.rate_limit import check_rate_limit
 from app.agents.core import AgentRequest, AgentResponse, AgentRunner, RunStatus, agent_registry
 from app.agents.core.router import pick_scheduler
 
@@ -11,7 +13,7 @@ runner = AgentRunner()
 @router.post("/run", response_model=AgentResponse)
 async def run_agent(
     body: AgentRequest,
-    user: AuthUser = Depends(get_current_user),
+    user: AuthUser = Depends(check_rate_limit),
 ):
     """Generic endpoint: run any registered agent by name."""
     if body.agent_name not in agent_registry.available:
@@ -31,7 +33,7 @@ async def run_agent(
 @router.post("/schedule", response_model=AgentResponse)
 async def schedule_event(
     body: dict,
-    user: AuthUser = Depends(get_current_user),
+    user: AuthUser = Depends(check_rate_limit),
 ):
     """Convenience endpoint — auto-routes to Haiku (fast) or Sonnet (complex)."""
     user_input = body.get("input", "")
@@ -46,6 +48,35 @@ async def schedule_event(
         raise HTTPException(status_code=500, detail=response.message)
 
     return response
+
+
+@router.post("/schedule/stream")
+async def schedule_stream(
+    body: dict,
+    user: AuthUser = Depends(check_rate_limit),
+):
+    """SSE streaming endpoint — auto-routes and streams text deltas, tool events, and results."""
+    user_input = body.get("input", "")
+    thread_id = body.get("thread_id")
+    location = body.get("location")
+    agent_name = pick_scheduler(user_input)
+
+    return StreamingResponse(
+        runner.run_stream(
+            input_text=user_input,
+            agent_name=agent_name,
+            user_id=user.id,
+            user_email=user.email,
+            thread_id=thread_id,
+            location=location,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/available")
