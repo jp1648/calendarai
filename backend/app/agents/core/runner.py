@@ -50,16 +50,26 @@ class AgentRunner:
     """
 
     async def _cleanup_browser(self, deps: AgentDeps) -> None:
-        """End Stagehand browser session if one was created during this run."""
-        if deps._stagehand_client and deps.browser_session_id:
+        """Stop Browser-Use session and release BrowserBase session."""
+        if deps._browser_use_browser:
             try:
-                await deps._stagehand_client.sessions.end(deps.browser_session_id)
-                logger.info("browser session ended id=%s", deps.browser_session_id)
+                await deps._browser_use_browser.stop()
+                logger.info("browser session stopped id=%s", deps.browser_session_id)
             except Exception as e:
-                logger.warning("browser cleanup failed: %s", str(e)[:200])
+                logger.warning("browser-use cleanup failed: %s", str(e)[:200])
+            finally:
+                deps._browser_use_browser = None
+
+        if deps.browser_session_id:
+            try:
+                from browserbase import Browserbase
+                from app.config import get_settings
+                bb = Browserbase(api_key=get_settings().browserbase_api_key)
+                bb.sessions.update(deps.browser_session_id, status="REQUEST_RELEASE")
+            except Exception as e:
+                logger.warning("browserbase release failed: %s", str(e)[:200])
             finally:
                 deps.browser_session_id = None
-                deps._stagehand_client = None
 
     async def build_deps(
         self,

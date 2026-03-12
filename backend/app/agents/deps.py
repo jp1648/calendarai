@@ -16,4 +16,4 @@ class AgentDeps:
     gmail_credentials: Any | None = None
     resy_auth_token: str | None = None
     browser_session_id: str | None = None
-    _stagehand_client: Any | None = field(default=None, repr=False)
+    _browser_use_browser: Any | None = field(default=None, repr=False)

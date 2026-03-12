@@ -1,4 +1,8 @@
-"""Test that test@calendarai.dev bypasses rate limits and can hit the streaming endpoint."""
+"""Test that test@calendarai.dev bypasses rate limits and can hit the streaming endpoint.
+
+These are integration tests that require a running backend and a real Supabase
+user. Run with: pytest -m integration tests/test_rate_limit_bypass.py
+"""
 
 import asyncio
 import json
@@ -6,6 +10,8 @@ import os
 import httpx
 import pytest
 from supabase import create_client
+
+pytestmark = pytest.mark.integration
 
 # --- Config (from environment) ---
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
