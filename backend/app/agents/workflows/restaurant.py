@@ -29,11 +29,12 @@ class ResyAdapter(PlatformAdapter):
     def is_available(self, deps: AgentDeps) -> bool:
         return bool(deps.resy_auth_token)
 
-    async def search(self, deps: AgentDeps, query: str) -> list[dict]:
+    async def search(self, deps: AgentDeps, query: str, location: str = "") -> list[dict]:
         from app.services.resy import ResyClient
 
+        search_query = f"{query} {location}".strip() if location else query
         client = ResyClient(auth_token=deps.resy_auth_token)
-        return await client.search_restaurants(query)
+        return await client.search_restaurants(search_query)
 
     async def find_slots(
         self, deps: AgentDeps, venue_id: str, date: str, party_size: int,
@@ -86,6 +87,50 @@ _ADAPTERS: dict[str, PlatformAdapter] = {
 }
 
 
+def _pick_best_venue(venues: list[dict], name: str, location: str) -> dict:
+    """Pick the venue that best matches the name and location.
+
+    Prefers venues whose neighborhood mentions the location (e.g. 'New York',
+    'NYC', 'midtown') over venues in other cities.  Falls back to the first
+    venue if nothing matches.
+    """
+    if not location and len(venues) == 1:
+        return venues[0]
+
+    name_lower = name.lower()
+    loc_lower = location.lower() if location else ""
+
+    # Common aliases for user-supplied locations
+    _NYC_HINTS = {"nyc", "new york", "manhattan", "brooklyn", "queens", "midtown", "downtown"}
+
+    def _score(v: dict) -> int:
+        score = 0
+        v_name = v.get("name", "").lower()
+        v_hood = v.get("neighborhood", "").lower()
+
+        # Name match
+        if name_lower in v_name:
+            score += 10
+
+        # Location / neighborhood match
+        if loc_lower:
+            if loc_lower in v_hood or loc_lower in v_name:
+                score += 20
+            # Check NYC aliases
+            if any(h in loc_lower for h in _NYC_HINTS):
+                if any(h in v_hood for h in _NYC_HINTS) or "ny" in v_hood:
+                    score += 20
+
+        # Penalize venues clearly in other countries/cities
+        # (neighborhood like "Firenze", "Hong Kong", "London" when user wants NYC)
+        if loc_lower and loc_lower not in v_hood and v_hood:
+            score -= 5
+
+        return score
+
+    return max(venues, key=_score)
+
+
 # ---------------------------------------------------------------------------
 # Agent tools (2 tools — all the agent ever needs for restaurants)
 # ---------------------------------------------------------------------------
@@ -113,6 +158,10 @@ async def find_restaurant(
     """
     from app.agents.tools.web_tools import web_search
 
+    # Use user's default location as fallback
+    if not location and ctx.deps.user_default_location:
+        location = ctx.deps.user_default_location
+
     # --- Step 1: Web search to find the restaurant + detect its platform ---
     query = f"{name} restaurant {location} reservation".strip()
     search_data = await web_search(
@@ -139,9 +188,14 @@ async def find_restaurant(
         adapter = _ADAPTERS[platform]
         if adapter.is_available(ctx.deps):
             try:
-                venues = await adapter.search(ctx.deps, name)
+                venues = await adapter.search(ctx.deps, name, location=location)
+                logger.info("find_restaurant search results=%d for query=%r", len(venues), name)
                 if venues:
-                    venue = venues[0]
+                    venue = _pick_best_venue(venues, name, location)
+                    logger.info(
+                        "find_restaurant using venue name=%s platform_id=%s neighborhood=%s",
+                        venue.get("name"), venue.get("platform_id"), venue.get("neighborhood"),
+                    )
                     restaurant.update({
                         "address": venue.get("neighborhood", ""),
                         "cuisine": venue.get("cuisine", ""),
@@ -150,8 +204,8 @@ async def find_restaurant(
                         ctx.deps, venue.get("platform_id", ""), date, party_size,
                     )
                     logger.info(
-                        "find_restaurant api=%s venue=%s slots=%d",
-                        platform, name, len(slots),
+                        "find_restaurant api=%s venue=%s slots=%d date=%s party=%d",
+                        platform, name, len(slots), date, party_size,
                     )
                     return {
                         "restaurant": restaurant,

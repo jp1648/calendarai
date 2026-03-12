@@ -79,6 +79,8 @@ never ask for info you already have.
 - When the user asks to book a restaurant, use find_restaurant with a SHORT, \
 simple name — e.g. "Vezzo" not "Vezzo Thin Crust Pizza NYC". Resy search \
 works best with 1-2 word queries. Drop suffixes like "restaurant", "NYC", etc.
+- ALWAYS include the location parameter (e.g. "NYC", "New York", neighborhood) \
+so the correct venue is found. Many restaurants share names across cities.
 - If find_restaurant returns 0 slots, try again with a shorter or alternate \
 name before giving up.
 - If slots are returned, pick the one closest to the user's requested time \

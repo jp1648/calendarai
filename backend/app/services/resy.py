@@ -131,10 +131,17 @@ class ResyClient:
             )
             resp.raise_for_status()
 
+        body = resp.json()
+        hits = body.get("search", {}).get("hits", [])
+        logger.info("search_restaurants query=%r hits=%d", query, len(hits))
+        if hits:
+            logger.debug("search_restaurants first_hit id=%s name=%s", hits[0].get("id"), hits[0].get("name"))
+
         results = []
-        for hit in resp.json().get("search", {}).get("hits", []):
+        for hit in hits:
+            platform_id = str(hit.get("id", {}).get("resy", ""))
             results.append({
-                "platform_id": str(hit.get("id", {}).get("resy", "")),
+                "platform_id": platform_id,
                 "name": hit.get("name", ""),
                 "neighborhood": hit.get("neighborhood", ""),
                 "cuisine": hit.get("cuisine", [""])[0] if hit.get("cuisine") else "",
@@ -143,6 +150,7 @@ class ResyClient:
 
     async def find_slots(self, venue_id: int, date: str, party_size: int) -> list[dict]:
         """Find available reservation slots."""
+        logger.info("find_slots venue_id=%s date=%s party_size=%d", venue_id, date, party_size)
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
                 f"{BASE_URL}/4/find",
@@ -151,8 +159,15 @@ class ResyClient:
             )
             resp.raise_for_status()
 
+        body = resp.json()
+        venues = body.get("results", {}).get("venues", [])
+        logger.info("find_slots response venues=%d keys=%s", len(venues), list(body.get("results", {}).keys())[:10])
+        if venues:
+            first = venues[0]
+            logger.debug("find_slots first_venue slots=%d keys=%s", len(first.get("slots", [])), list(first.keys())[:10])
+
         slots = []
-        for venue in resp.json().get("results", {}).get("venues", []):
+        for venue in venues:
             for slot in venue.get("slots", []):
                 config = slot.get("config", {})
                 time_str = slot.get("date", {}).get("start", "")
