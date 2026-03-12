@@ -35,7 +35,7 @@ async def _fetch_resy_api_key() -> str:
         # Fetch the bundle and extract the API key
         resp = await client.get(bundle_url)
         resp.raise_for_status()
-        key_match = re.search(r'api_key\s*[:=]\s*["\']([A-Za-z0-9_-]{20,})["\']', resp.text)
+        key_match = re.search(r'api[_-]?[Kk]ey\s*[:=]\s*["\']([A-Za-z0-9_-]{20,})["\']', resp.text)
         if not key_match:
             raise ValueError("Could not extract API key from Resy bundle")
 
