@@ -2,6 +2,7 @@
   "expo": {
     "name": "CalendarAI",
     "slug": "calendarai",
+    "owner": "jp1648",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
