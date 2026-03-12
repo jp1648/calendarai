@@ -116,10 +116,10 @@ export default function SettingsScreen() {
     setResyError("");
     try {
       await api.resy.connect(resyEmail, resyPassword);
-      setProfile((prev) => (prev ? { ...prev, resy_connected: true } : null));
       setResyModalVisible(false);
       setResyEmail("");
       setResyPassword("");
+      await loadProfile();
     } catch (e: any) {
       const msg = e.message || "Could not connect to Resy.";
       if (msg.includes("401")) {
