@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "CalendarAI",
+    "slug": "calendarai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "calendarai",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F0EA"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.calendarai.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F0EA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.calendarai.app"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
