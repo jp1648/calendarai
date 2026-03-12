@@ -233,7 +233,9 @@ async def resy_connect_json(
         result = await client.login(email, password)
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger("calendarai.resy").error("Resy connect failed: %s", e, exc_info=True)
         raise HTTPException(status_code=502, detail="Could not connect to Resy. Please try again.")
 
     sb = get_supabase_admin()

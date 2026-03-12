@@ -116,7 +116,6 @@ export default function SettingsScreen() {
     setResyError("");
     try {
       await api.resy.connect(resyEmail, resyPassword);
-      setProfile((prev) => (prev ? { ...prev, resy_connected: true } : null));
       setResyModalVisible(false);
       setResyEmail("");
       setResyPassword("");
@@ -125,10 +124,12 @@ export default function SettingsScreen() {
       if (msg.includes("401")) {
         setResyError("Invalid email or password.");
       } else {
-        setResyError("Could not connect to Resy. Please try again.");
+        // Connect may have succeeded server-side even if response parsing failed
+        setResyModalVisible(false);
       }
     } finally {
       setResyConnecting(false);
+      await loadProfile();
     }
   };
 

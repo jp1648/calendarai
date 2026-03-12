@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
+import { TouchableOpacity, Text, Platform } from "react-native";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { fontSize } from "../../lib/responsive";
 import { EARTHY, FONTS } from "../../lib/theme";
@@ -37,7 +38,19 @@ export default function AppLayout() {
         />
         <Stack.Screen
           name="settings"
-          options={{ title: "Settings", presentation: "modal" }}
+          options={{
+            title: "Settings",
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{ paddingRight: 16 }}
+              >
+                <Text style={{ color: EARTHY.bark, fontSize: fontSize(16) }}>
+                  {Platform.OS === "web" ? "\u2190 Back" : "\u2039"}
+                </Text>
+              </TouchableOpacity>
+            ),
+          }}
         />
       </Stack>
     </ErrorBoundary>

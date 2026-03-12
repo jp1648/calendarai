@@ -29,7 +29,7 @@ class PlatformAdapter(ABC):
         """Whether the user has this platform connected / can use the API."""
 
     @abstractmethod
-    async def search(self, deps: AgentDeps, query: str) -> list[dict]:
+    async def search(self, deps: AgentDeps, query: str, location: str = "") -> list[dict]:
         """Search for venues/businesses on this platform."""
 
     @abstractmethod
@@ -39,7 +39,7 @@ class PlatformAdapter(ABC):
         """Find available booking slots at a venue."""
 
     @abstractmethod
-    async def book(self, deps: AgentDeps, booking_ref: str) -> dict:
+    async def book(self, deps: AgentDeps, booking_ref: str, date: str = "", party_size: int = 2) -> dict:
         """Complete a booking.  Returns dict with 'success' or 'error' key."""
 
 
