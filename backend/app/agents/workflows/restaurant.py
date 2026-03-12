@@ -105,7 +105,7 @@ async def find_restaurant(
     and returns available slots when possible.
 
     Args:
-        name: Restaurant name (e.g. 'Veerays', 'Carbone')
+        name: Short restaurant name — use 1-2 words (e.g. 'Vezzo', 'Carbone', not 'Vezzo Thin Crust Pizza NYC')
         date: Date in YYYY-MM-DD format
         party_size: Number of guests (default 2)
         location: Neighborhood or area (e.g. 'midtown east')
