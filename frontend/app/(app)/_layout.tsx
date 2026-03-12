@@ -37,7 +37,7 @@ export default function AppLayout() {
         />
         <Stack.Screen
           name="settings"
-          options={{ title: "Settings", presentation: "modal" }}
+          options={{ title: "Settings" }}
         />
       </Stack>
     </ErrorBoundary>
