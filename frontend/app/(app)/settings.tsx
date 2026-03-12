@@ -119,16 +119,17 @@ export default function SettingsScreen() {
       setResyModalVisible(false);
       setResyEmail("");
       setResyPassword("");
-      await loadProfile();
     } catch (e: any) {
       const msg = e.message || "Could not connect to Resy.";
       if (msg.includes("401")) {
         setResyError("Invalid email or password.");
       } else {
-        setResyError("Could not connect to Resy. Please try again.");
+        // Connect may have succeeded server-side even if response parsing failed
+        setResyModalVisible(false);
       }
     } finally {
       setResyConnecting(false);
+      await loadProfile();
     }
   };
 
