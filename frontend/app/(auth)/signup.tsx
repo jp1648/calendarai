@@ -12,6 +12,7 @@ import {
 import { Link } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -55,7 +56,7 @@ export default function SignupScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={EARTHY.stoneLight}
           />
           <TextInput
             style={styles.input}
@@ -63,7 +64,7 @@ export default function SignupScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={EARTHY.stoneLight}
           />
 
           <TouchableOpacity
@@ -93,7 +94,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: EARTHY.cream,
   },
   inner: {
     flex: 1,
@@ -105,13 +106,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize(32),
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontFamily: FONTS.headingBold,
+    color: EARTHY.bark,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: fontSize(16),
-    color: "#9CA3AF",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyLight,
     marginTop: s(4),
   },
   form: {
@@ -119,15 +121,16 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: EARTHY.sand,
     borderRadius: s(14),
     padding: s(16),
     fontSize: fontSize(16),
-    backgroundColor: "#FFFFFF",
-    color: "#1A1A1A",
+    backgroundColor: EARTHY.white,
+    color: EARTHY.bark,
+    fontFamily: FONTS.body,
   },
   button: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
     borderRadius: s(14),
     padding: s(16),
     alignItems: "center",
@@ -137,20 +140,21 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: fontSize(16),
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
   },
   linkButton: {
     marginTop: s(24),
     alignItems: "center",
   },
   linkText: {
-    color: "#9CA3AF",
+    color: EARTHY.stone,
     fontSize: fontSize(14),
+    fontFamily: FONTS.body,
   },
   linkBold: {
-    color: "#1A1A1A",
-    fontWeight: "600",
+    color: ACCENT,
+    fontFamily: FONTS.bodyMedium,
   },
 });

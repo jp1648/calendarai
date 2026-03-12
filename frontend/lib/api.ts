@@ -74,6 +74,14 @@ export const api = {
   gmail: {
     getAuthUrl: () => request<{ url: string }>("/api/gmail/auth-url"),
   },
+  resy: {
+    connect: (email: string, password: string) =>
+      request<{ status: string }>("/api/resy/connect", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      }),
+    unlink: () => request<{ status: string }>("/api/resy/unlink", { method: "POST" }),
+  },
   profile: {
     get: () =>
       request<{
@@ -83,6 +91,8 @@ export const api = {
         default_location: string;
         email: string;
         gmail_connected: boolean;
+        resy_connected: boolean;
+        ical_feed_token: string;
       }>("/api/profile"),
     update: (data: {
       full_name?: string;

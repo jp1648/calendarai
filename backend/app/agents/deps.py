@@ -14,5 +14,6 @@ class AgentDeps:
     user_phone: str = ""
     user_default_location: str = ""
     gmail_credentials: Any | None = None
+    resy_auth_token: str | None = None
     browser_session_id: str | None = None
     _stagehand_client: Any | None = field(default=None, repr=False)

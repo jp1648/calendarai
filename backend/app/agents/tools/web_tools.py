@@ -24,7 +24,7 @@ def _get_client() -> TavilyClient:
     return _client
 
 
-@tool_registry.register("web_search")
+@tool_registry.register("web_search", category="search")
 async def web_search(
     ctx: RunContext[AgentDeps],
     query: str,
@@ -83,7 +83,7 @@ async def web_search(
     }
 
 
-@tool_registry.register("web_extract")
+@tool_registry.register("web_extract", category="search")
 async def web_extract(
     ctx: RunContext[AgentDeps],
     urls: list[str],

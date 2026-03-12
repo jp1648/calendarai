@@ -16,15 +16,10 @@ import {
 } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
 import { CalendarEvent } from "../../stores/eventStore";
+import { EARTHY, ACCENT, FONTS, CATEGORIES, categorizeEvent } from "../../lib/theme";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const SWIPE_THRESHOLD = 50;
-
-const DOT_COLORS: Record<string, string> = {
-  manual: "#3B82F6",
-  email_agent: "#EC4899",
-  schedule_agent: "#8B5CF6",
-};
 
 interface Props {
   currentMonth: Date;
@@ -103,7 +98,7 @@ export default function MonthView({
 
               const dotColors = [
                 ...new Set(
-                  dayEvents.map((e) => DOT_COLORS[e.source] || DOT_COLORS.manual),
+                  dayEvents.map((e) => CATEGORIES[categorizeEvent(e)].dot),
                 ),
               ].slice(0, 3);
 
@@ -161,7 +156,8 @@ const styles = StyleSheet.create({
   weekdayText: {
     fontSize: fontSize(11),
     fontWeight: "500",
-    color: "#9CA3AF",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyMedium,
     letterSpacing: 0.5,
   },
   weekRow: {
@@ -182,18 +178,18 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: fontSize(13),
-    color: "#1A1A1A",
-    fontWeight: "400",
+    color: EARTHY.bark,
+    fontFamily: FONTS.body,
   },
   dimText: {
-    color: "#D1D5DB",
+    color: EARTHY.stoneLight,
   },
   todayCircle: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
   },
   todayText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: EARTHY.white,
+    fontFamily: FONTS.bodyMedium,
   },
   dotRow: {
     flexDirection: "row",

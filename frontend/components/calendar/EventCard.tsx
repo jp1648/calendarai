@@ -3,6 +3,7 @@ import { CalendarEvent } from "../../stores/eventStore";
 import { formatTime } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
 import AgentBadge from "./AgentBadge";
+import { EARTHY, FONTS, getCategoryColors } from "../../lib/theme";
 
 interface Props {
   event: CalendarEvent;
@@ -10,17 +11,11 @@ interface Props {
   onPress?: (event: CalendarEvent) => void;
 }
 
-const SOURCE_COLORS: Record<string, string> = {
-  manual: "#3B82F6",
-  email_agent: "#EC4899",
-  schedule_agent: "#8B5CF6",
-};
-
 export default function EventCard({ event, compact, onPress }: Props) {
-  const color = SOURCE_COLORS[event.source] || SOURCE_COLORS.manual;
+  const cat = getCategoryColors(event);
 
   const card = (
-    <View style={[styles.card, { backgroundColor: color + "10", borderLeftColor: color }]}>
+    <View style={[styles.card, { backgroundColor: cat.bg, borderLeftColor: cat.border }]}>
       <View style={styles.header}>
         <Text style={[styles.title, compact && styles.titleCompact]} numberOfLines={1}>
           {event.title}
@@ -28,7 +23,7 @@ export default function EventCard({ event, compact, onPress }: Props) {
         {event.source !== "manual" && <AgentBadge source={event.source} />}
       </View>
       {!compact && (
-        <Text style={styles.time}>
+        <Text style={[styles.time, { color: cat.text }]}>
           {formatTime(event.start_time)} – {formatTime(event.end_time)}
         </Text>
       )}
@@ -65,8 +60,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize(13),
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.body,
+    color: EARTHY.bark,
     flex: 1,
   },
   titleCompact: {
@@ -74,12 +69,13 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: fontSize(11),
-    color: "#6B7280",
+    fontFamily: FONTS.bodyLight,
     marginTop: s(2),
   },
   location: {
     fontSize: fontSize(11),
-    color: "#9CA3AF",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyLight,
     marginTop: s(1),
   },
 });

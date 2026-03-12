@@ -41,7 +41,7 @@ async def _ensure_session(deps: AgentDeps) -> tuple[AsyncStagehand, str]:
     return client, session.id
 
 
-@tool_registry.register("browser_navigate")
+@tool_registry.register("browser_navigate", category="browser")
 async def browser_navigate(
     ctx: RunContext[AgentDeps],
     url: str,
@@ -61,7 +61,7 @@ async def browser_navigate(
         return {"error": f"Browser navigation failed: {e}. Try again or try a different URL."}
 
 
-@tool_registry.register("browser_act")
+@tool_registry.register("browser_act", category="browser")
 async def browser_act(
     ctx: RunContext[AgentDeps],
     instruction: str,
@@ -87,7 +87,7 @@ async def browser_act(
         return {"error": f"Browser action failed: {e}. Try a different instruction or use browser_observe first to see available elements."}
 
 
-@tool_registry.register("browser_extract")
+@tool_registry.register("browser_extract", category="browser")
 async def browser_extract(
     ctx: RunContext[AgentDeps],
     instruction: str,
@@ -118,7 +118,7 @@ async def browser_extract(
         return {"error": f"Browser extraction failed: {e}. Try again with a simpler instruction."}
 
 
-@tool_registry.register("browser_observe")
+@tool_registry.register("browser_observe", category="browser")
 async def browser_observe(
     ctx: RunContext[AgentDeps],
     instruction: str,

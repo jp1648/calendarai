@@ -8,6 +8,22 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ToastProvider from "../components/ui/ToastProvider";
 import ErrorBoundary from "../components/ui/ErrorBoundary";
 import { queryClient } from "../lib/queryClient";
+import { useFonts as useDMSans } from "@expo-google-fonts/dm-sans";
+import { useFonts as useFraunces } from "@expo-google-fonts/fraunces";
+import {
+  DMSans_300Light,
+  DMSans_400Regular,
+  DMSans_500Medium,
+} from "@expo-google-fonts/dm-sans";
+import {
+  Fraunces_300Light,
+  Fraunces_500Medium,
+  Fraunces_700Bold,
+} from "@expo-google-fonts/fraunces";
+import * as SplashScreen from "expo-splash-screen";
+import { EARTHY } from "../lib/theme";
+
+SplashScreen.preventAutoHideAsync();
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -26,8 +42,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#FAFAFA" }}>
-        <ActivityIndicator size="large" color="#1A1A1A" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: EARTHY.cream }}>
+        <ActivityIndicator size="large" color={EARTHY.bark} />
       </View>
     );
   }
@@ -36,6 +52,33 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [dmLoaded] = useDMSans({
+    DMSans_300Light,
+    DMSans_400Regular,
+    DMSans_500Medium,
+  });
+  const [frauncesLoaded] = useFraunces({
+    Fraunces_300Light,
+    Fraunces_500Medium,
+    Fraunces_700Bold,
+  });
+
+  const fontsLoaded = dmLoaded && frauncesLoaded;
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: EARTHY.cream }}>
+        <ActivityIndicator size="large" color={EARTHY.bark} style={{ flex: 1 }} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>

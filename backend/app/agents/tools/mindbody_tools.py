@@ -15,7 +15,7 @@ _NOT_CONFIGURED = {
 }
 
 
-@tool_registry.register("mindbody_search_studios")
+@tool_registry.register("mindbody_search_studios", category="fitness")
 async def mindbody_search_studios(
     ctx: RunContext[AgentDeps],
     query: str = "",
@@ -52,7 +52,7 @@ async def mindbody_search_studios(
         return {"error": f"Mindbody API error: {e}. Try using browser tools instead."}
 
 
-@tool_registry.register("mindbody_get_classes")
+@tool_registry.register("mindbody_get_classes", category="fitness")
 async def mindbody_get_classes(
     ctx: RunContext[AgentDeps],
     location_id: int,
@@ -92,7 +92,7 @@ async def mindbody_get_classes(
         return {"error": f"Mindbody API error: {e}. Try using browser tools instead."}
 
 
-@tool_registry.register("mindbody_book_class")
+@tool_registry.register("mindbody_book_class", category="fitness")
 async def mindbody_book_class(
     ctx: RunContext[AgentDeps],
     location_id: int,

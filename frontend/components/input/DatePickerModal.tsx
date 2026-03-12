@@ -16,6 +16,7 @@ import {
   subMonths,
 } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -42,11 +43,11 @@ export default function DatePickerModal({ visible, value, onSelect, onClose }: P
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
           <View style={styles.monthRow}>
             <TouchableOpacity onPress={() => setViewMonth((m) => subMonths(m, 1))}>
-              <Text style={styles.arrow}>‹</Text>
+              <Text style={styles.arrow}>{"\u2039"}</Text>
             </TouchableOpacity>
             <Text style={styles.monthText}>{format(viewMonth, "MMMM yyyy")}</Text>
             <TouchableOpacity onPress={() => setViewMonth((m) => addMonths(m, 1))}>
-              <Text style={styles.arrow}>›</Text>
+              <Text style={styles.arrow}>{"\u203A"}</Text>
             </TouchableOpacity>
           </View>
 
@@ -92,18 +93,21 @@ export default function DatePickerModal({ visible, value, onSelect, onClose }: P
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.25)",
+    backgroundColor: "rgba(59,47,38,0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: EARTHY.white,
     borderRadius: s(20),
     padding: s(20),
     width: s(320),
-    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+    shadowColor: EARTHY.bark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
     elevation: 8,
-  } as any,
+  },
   monthRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -112,13 +116,13 @@ const styles = StyleSheet.create({
   },
   arrow: {
     fontSize: fontSize(24),
-    color: "#1A1A1A",
+    color: EARTHY.bark,
     paddingHorizontal: s(12),
   },
   monthText: {
     fontSize: fontSize(16),
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.heading,
+    color: EARTHY.bark,
   },
   weekdayRow: {
     flexDirection: "row",
@@ -141,22 +145,23 @@ const styles = StyleSheet.create({
     borderRadius: s(18),
   },
   selectedCircle: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
   },
   dayText: {
     fontSize: fontSize(15),
-    color: "#1A1A1A",
+    color: EARTHY.bark,
+    fontFamily: FONTS.body,
   },
   dimText: {
-    color: "#D1D5DB",
+    color: EARTHY.stoneLight,
   },
   selectedText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: EARTHY.white,
+    fontFamily: FONTS.bodyMedium,
   },
   weekdayText: {
     fontSize: fontSize(12),
-    color: "#9CA3AF",
-    fontWeight: "500",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyMedium,
   },
 });

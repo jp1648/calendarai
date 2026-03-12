@@ -114,6 +114,15 @@ _complex = Route(
         "when are me and Mike both free",
         "book a dinner for me and my partner",
         "set up a meeting with alex@company.com",
+        # Gmail / email queries
+        "check my email for events",
+        "look through my emails for any upcoming events",
+        "search my gmail for reservations",
+        "find confirmation emails in my inbox",
+        "check my email for meetings tomorrow",
+        "do I have any booking confirmations in my email",
+        "scan my inbox for flight confirmations",
+        "read my latest emails",
     ],
     score_threshold=0.3,
 )

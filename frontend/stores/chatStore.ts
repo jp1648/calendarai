@@ -20,10 +20,12 @@ interface ChatStore {
   isOpen: boolean;
   streaming: boolean;
   thinking: boolean;
+  statusText: string;
   addUserMessage: (text: string) => void;
   appendAgentDelta: (delta: string) => void;
   addEventCard: (event: ChatMessage & { role: "event_card" }) => void;
   setThinking: (t: boolean) => void;
+  setStatusText: (text: string) => void;
   setDone: (events: any[]) => void;
   reset: () => void;
   setOpen: (open: boolean) => void;
@@ -37,6 +39,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   isOpen: false,
   streaming: false,
   thinking: false,
+  statusText: "",
 
   addUserMessage: (text) =>
     set((state) => ({
@@ -46,15 +49,18 @@ export const useChatStore = create<ChatStore>((set) => ({
   appendAgentDelta: (delta) =>
     set((state) => {
       const last = state.messages[state.messages.length - 1];
-      if (last?.role === "assistant") {
+      // Only append to an existing assistant bubble if it's still streaming
+      if (last?.role === "assistant" && last.streaming) {
         return {
           messages: [
             ...state.messages.slice(0, -1),
             { ...last, content: last.content + delta },
           ],
           thinking: false,
+          statusText: "",
         };
       }
+      // Start a new assistant bubble
       return {
         messages: [
           ...state.messages,
@@ -62,6 +68,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         ],
         isOpen: true,
         thinking: false,
+        statusText: "",
       };
     }),
 
@@ -70,7 +77,8 @@ export const useChatStore = create<ChatStore>((set) => ({
       messages: [...state.messages, card],
     })),
 
-  setThinking: (t) => set({ thinking: t, isOpen: true }),
+  setThinking: (t) => set({ thinking: t, isOpen: true, ...(t ? {} : { statusText: "" }) }),
+  setStatusText: (text) => set({ statusText: text }),
 
   setDone: (_events) =>
     set((state) => {
@@ -89,7 +97,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     }),
 
   reset: () =>
-    set({ messages: [], threadId: null, isOpen: false, streaming: false, thinking: false }),
+    set({ messages: [], threadId: null, isOpen: false, streaming: false, thinking: false, statusText: "" }),
 
   setOpen: (open) => set({ isOpen: open }),
   setThreadId: (id) => set({ threadId: id }),

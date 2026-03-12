@@ -14,6 +14,7 @@ import DayView from "../../../components/calendar/DayView";
 import ChatPanel from "../../../components/chat/ChatPanel";
 import NaturalLanguageBar from "../../../components/input/NaturalLanguageBar";
 import { s, fontSize } from "../../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
 export default function DayScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -66,6 +67,7 @@ export default function DayScreen() {
           onEventPress={onEventPress}
           onNextDay={goToNextDay}
           onPrevDay={goToPrevDay}
+          onDoubleTap={() => router.navigate("/(app)")}
           refreshing={loading}
           onRefresh={refresh}
         />
@@ -79,14 +81,14 @@ export default function DayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: EARTHY.cream,
   },
   headerButton: {
     marginRight: s(4),
   },
   headerButtonText: {
-    color: "#1A1A1A",
+    color: ACCENT,
     fontSize: fontSize(15),
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
   },
 });

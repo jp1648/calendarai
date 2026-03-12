@@ -12,6 +12,7 @@ import { CalendarEvent } from "../../stores/eventStore";
 import EventCard from "./EventCard";
 import { parseISO } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, FONTS } from "../../lib/theme";
 
 const HOUR_HEIGHT = s(52);
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -23,6 +24,7 @@ interface Props {
   onEventPress?: (event: CalendarEvent) => void;
   onNextDay?: () => void;
   onPrevDay?: () => void;
+  onDoubleTap?: () => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }
@@ -33,6 +35,7 @@ export default function DayView({
   onEventPress,
   onNextDay,
   onPrevDay,
+  onDoubleTap,
   refreshing,
   onRefresh,
 }: Props) {
@@ -72,6 +75,14 @@ export default function DayView({
       translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
     });
 
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      if (onDoubleTap) runOnJS(onDoubleTap)();
+    });
+
+  const composedGesture = Gesture.Race(panGesture, doubleTapGesture);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
@@ -84,7 +95,7 @@ export default function DayView({
   };
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={composedGesture}>
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <ScrollView
           ref={scrollRef}
@@ -94,7 +105,7 @@ export default function DayView({
               <RefreshControl
                 refreshing={refreshing ?? false}
                 onRefresh={onRefresh}
-                tintColor="#9CA3AF"
+                tintColor={EARTHY.stone}
               />
             ) : undefined
           }
@@ -152,8 +163,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: s(-44),
     fontSize: fontSize(10),
-    color: "#9CA3AF",
-    fontWeight: "500",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyMedium,
     width: s(40),
     textAlign: "right",
     top: -7,
@@ -161,7 +172,7 @@ const styles = StyleSheet.create({
   hourLine: {
     flex: 1,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E5E7EB",
+    borderTopColor: EARTHY.sand,
   },
   eventWrapper: {
     position: "absolute",
@@ -177,12 +188,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize(14),
-    color: "#9CA3AF",
-    fontWeight: "500",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyMedium,
   },
   emptyHint: {
     fontSize: fontSize(12),
-    color: "#D1D5DB",
+    color: EARTHY.stoneLight,
+    fontFamily: FONTS.bodyLight,
     marginTop: s(4),
   },
 });

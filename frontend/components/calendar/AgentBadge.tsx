@@ -1,13 +1,14 @@
 import { View, Text, StyleSheet } from "react-native";
 import { s, fontSize } from "../../lib/responsive";
+import { FONTS } from "../../lib/theme";
 
 interface Props {
   source: string;
 }
 
-const BADGE_CONFIG: Record<string, { label: string; color: string }> = {
-  email_agent: { label: "Email", color: "#EC4899" },
-  schedule_agent: { label: "AI", color: "#8B5CF6" },
+const BADGE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  email_agent: { label: "Email", color: "#C07A4E", bg: "rgba(232,168,124,0.14)" },
+  schedule_agent: { label: "AI", color: "#8A7BA0", bg: "rgba(184,169,201,0.16)" },
 };
 
 export default function AgentBadge({ source }: Props) {
@@ -15,7 +16,7 @@ export default function AgentBadge({ source }: Props) {
   if (!config) return null;
 
   return (
-    <View style={[styles.badge, { backgroundColor: config.color + "14" }]}>
+    <View style={[styles.badge, { backgroundColor: config.bg }]}>
       <Text style={[styles.text, { color: config.color }]}>{config.label}</Text>
     </View>
   );
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: fontSize(10),
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
     letterSpacing: 0.3,
   },
 });

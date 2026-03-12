@@ -24,7 +24,7 @@ def _ensure_tz(dt_str: str, user_tz: str) -> str:
     return dt.isoformat()
 
 
-@tool_registry.register("create_event")
+@tool_registry.register("create_event", category="calendar")
 async def create_event(
     ctx: RunContext[AgentDeps],
     title: str,
@@ -69,7 +69,7 @@ async def create_event(
     return result.data[0]
 
 
-@tool_registry.register("check_conflicts")
+@tool_registry.register("check_conflicts", category="calendar")
 async def check_conflicts(
     ctx: RunContext[AgentDeps],
     start_time: str,
@@ -94,7 +94,7 @@ async def check_conflicts(
     return result.data
 
 
-@tool_registry.register("list_events_for_date")
+@tool_registry.register("list_events_for_date", category="calendar")
 async def list_events_for_date(
     ctx: RunContext[AgentDeps],
     date: str,

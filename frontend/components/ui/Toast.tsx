@@ -4,6 +4,7 @@ import Animated, {
   SlideOutDown,
 } from "react-native-reanimated";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 export interface ToastAction {
   label: string;
@@ -48,20 +49,23 @@ const styles = StyleSheet.create({
     bottom: s(100),
     left: s(20),
     right: s(20),
-    backgroundColor: "#1A1A1A",
+    backgroundColor: EARTHY.bark,
     borderRadius: s(16),
     paddingVertical: s(14),
     paddingHorizontal: s(20),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
+    shadowColor: EARTHY.bark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
     elevation: 8,
-  } as any,
+  },
   message: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: fontSize(14),
-    fontWeight: "500",
+    fontFamily: FONTS.bodyMedium,
     flex: 1,
     marginRight: s(12),
   },
@@ -70,8 +74,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: s(8),
   },
   actionText: {
-    color: "#8B5CF6",
+    color: ACCENT,
     fontSize: fontSize(14),
-    fontWeight: "700",
+    fontFamily: FONTS.bodyMedium,
   },
 });

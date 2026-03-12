@@ -9,9 +9,10 @@ BOOKING_CATEGORIES: dict[str, dict] = {
         "title_template": "Dinner at {business_name}",
         "keywords": ["restaurant", "dinner", "lunch", "brunch", "food", "eat", "reservation", "table", "cuisine"],
         "providers": [
-            {"name": "OpenTable", "method": "browser"},
-            {"name": "Resy", "method": "browser"},
+            {"name": "Resy", "method": "workflow"},
+            {"name": "OpenTable", "method": "workflow"},
         ],
+        "workflow_tools": ["find_restaurant", "book_restaurant"],
     },
     "doctor": {
         "label": "Doctor",

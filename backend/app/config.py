@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     mindbody_api_key: str = ""
     mindbody_site_id: str = "-99"  # -99 = sandbox
 
+    resy_api_key: str = ""
+
+    encryption_key: str = ""
+
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""

@@ -1,20 +1,22 @@
 import { Stack } from "expo-router";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { fontSize } from "../../lib/responsive";
+import { EARTHY, FONTS } from "../../lib/theme";
 
 export default function AppLayout() {
   return (
     <ErrorBoundary>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: "#FAFAFA" },
-          headerTintColor: "#1A1A1A",
+          headerStyle: { backgroundColor: EARTHY.cream },
+          headerTintColor: EARTHY.bark,
           headerShadowVisible: false,
           headerTitleStyle: {
-            fontWeight: "600",
+            fontFamily: FONTS.heading,
+            fontWeight: "500",
             fontSize: fontSize(17),
           },
-          contentStyle: { backgroundColor: "#FAFAFA" },
+          contentStyle: { backgroundColor: EARTHY.cream },
         }}
       >
         <Stack.Screen

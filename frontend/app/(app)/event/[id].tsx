@@ -16,6 +16,7 @@ import { parseISO, format } from "../../../lib/dates";
 import DatePickerModal from "../../../components/input/DatePickerModal";
 import TimePickerModal from "../../../components/input/TimePickerModal";
 import { s, fontSize } from "../../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
 export default function EditEventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -130,7 +131,7 @@ export default function EditEventScreen() {
           value={title}
           onChangeText={setTitle}
           placeholder="Event title"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={EARTHY.stoneLight}
         />
 
         <Text style={styles.label}>Description</Text>
@@ -140,7 +141,7 @@ export default function EditEventScreen() {
           onChangeText={setDescription}
           placeholder="Optional description"
           multiline
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={EARTHY.stoneLight}
         />
 
         <Text style={styles.label}>Location</Text>
@@ -149,7 +150,7 @@ export default function EditEventScreen() {
           value={location}
           onChangeText={setLocation}
           placeholder="Optional location"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={EARTHY.stoneLight}
         />
 
         <Text style={styles.label}>Date</Text>
@@ -214,7 +215,7 @@ export default function EditEventScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: EARTHY.cream,
   },
   content: {
     padding: s(24),
@@ -223,11 +224,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FAFAFA",
+    backgroundColor: EARTHY.cream,
   },
   notFoundText: {
     fontSize: fontSize(15),
-    color: "#9CA3AF",
+    color: EARTHY.stone,
+    fontFamily: FONTS.body,
   },
   headerButton: {
     marginRight: s(4),
@@ -235,23 +237,24 @@ const styles = StyleSheet.create({
   deleteText: {
     color: "#EF4444",
     fontSize: fontSize(15),
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
   },
   label: {
     fontSize: fontSize(13),
-    fontWeight: "600",
-    color: "#6B7280",
+    fontFamily: FONTS.bodyMedium,
+    color: EARTHY.stone,
     marginBottom: s(6),
     marginTop: s(16),
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: EARTHY.sand,
     borderRadius: s(14),
     padding: s(16),
     fontSize: fontSize(16),
-    backgroundColor: "#FFFFFF",
-    color: "#1A1A1A",
+    backgroundColor: EARTHY.white,
+    color: EARTHY.bark,
+    fontFamily: FONTS.body,
   },
   multiline: {
     minHeight: s(80),
@@ -259,17 +262,18 @@ const styles = StyleSheet.create({
   },
   pickerField: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: EARTHY.sand,
     borderRadius: s(14),
     padding: s(16),
-    backgroundColor: "#FFFFFF",
+    backgroundColor: EARTHY.white,
   },
   pickerText: {
     fontSize: fontSize(16),
-    color: "#1A1A1A",
+    color: EARTHY.bark,
+    fontFamily: FONTS.body,
   },
   placeholderText: {
-    color: "#9CA3AF",
+    color: EARTHY.stoneLight,
   },
   row: {
     flexDirection: "row",
@@ -279,7 +283,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   button: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
     borderRadius: s(14),
     padding: s(16),
     alignItems: "center",
@@ -289,8 +293,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: fontSize(16),
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
   },
 });

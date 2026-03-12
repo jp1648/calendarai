@@ -1,11 +1,28 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.services.supabase import get_supabase_admin
+
+
+def _ensure_tz(dt: datetime, user_tz: str) -> str:
+    """Ensure datetime has the user's timezone before storing."""
+    tz = ZoneInfo(user_tz)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+    elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
+        dt = dt.replace(tzinfo=tz)
+    return dt.isoformat()
+
+
+def _get_user_tz(user_id: str) -> str:
+    sb = get_supabase_admin()
+    result = sb.table("profiles").select("timezone").eq("id", user_id).single().execute()
+    return (result.data or {}).get("timezone", "America/New_York")
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
@@ -68,11 +85,12 @@ async def get_event(event_id: str, user: AuthUser = Depends(get_current_user)):
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_event(body: EventCreate, user: AuthUser = Depends(get_current_user)):
     sb = get_supabase_admin()
+    tz = _get_user_tz(user.id)
     row = {
         "user_id": user.id,
         **body.model_dump(exclude_none=True),
-        "start_time": body.start_time.isoformat(),
-        "end_time": body.end_time.isoformat(),
+        "start_time": _ensure_tz(body.start_time, tz),
+        "end_time": _ensure_tz(body.end_time, tz),
     }
     result = sb.table("events").insert(row).execute()
     return result.data[0]
@@ -83,11 +101,12 @@ async def update_event(
     event_id: str, body: EventUpdate, user: AuthUser = Depends(get_current_user)
 ):
     sb = get_supabase_admin()
+    tz = _get_user_tz(user.id)
     updates = body.model_dump(exclude_none=True)
     if "start_time" in updates:
-        updates["start_time"] = updates["start_time"].isoformat()
+        updates["start_time"] = _ensure_tz(updates["start_time"], tz)
     if "end_time" in updates:
-        updates["end_time"] = updates["end_time"].isoformat()
+        updates["end_time"] = _ensure_tz(updates["end_time"], tz)
     result = (
         sb.table("events")
         .update(updates)

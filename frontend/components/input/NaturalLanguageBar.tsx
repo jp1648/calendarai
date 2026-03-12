@@ -16,6 +16,7 @@ import { useToast } from "../ui/ToastProvider";
 import { useNotifications } from "../../hooks/useNotifications";
 import { formatTime } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 interface Props {
   onEventCreated?: () => void;
@@ -70,6 +71,9 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.inputRow}>
+        <View style={styles.aiIcon}>
+          <View style={styles.aiDot} />
+        </View>
         <TextInput
           style={styles.input}
           value={input}
@@ -77,15 +81,15 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
           placeholder={
             isOpen
               ? "Reply..."
-              : "What would you like to schedule?"
+              : "Ask AI about your schedule..."
           }
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={EARTHY.stoneLight}
           onSubmitEditing={handleSubmit}
           returnKeyType="send"
           editable={!streaming}
         />
         {streaming ? (
-          <ActivityIndicator style={styles.sendButton} color="#9CA3AF" />
+          <ActivityIndicator style={styles.sendButton} color={EARTHY.stone} />
         ) : (
           <TouchableOpacity
             style={[
@@ -102,7 +106,7 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
                 !input.trim() && styles.sendArrowDisabled,
               ]}
             >
-              ↑
+              {"\u2191"}
             </Text>
           </TouchableOpacity>
         )}
@@ -114,8 +118,8 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E5E7EB",
-    backgroundColor: "#FAFAFA",
+    borderTopColor: EARTHY.sand,
+    backgroundColor: EARTHY.cream,
     paddingHorizontal: s(12),
     paddingVertical: s(6),
     paddingBottom: s(16),
@@ -123,18 +127,39 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: s(22),
+    backgroundColor: EARTHY.white,
+    borderRadius: s(16),
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    paddingLeft: s(14),
+    borderColor: EARTHY.sand,
+    paddingLeft: s(10),
     paddingRight: s(4),
+    shadowColor: EARTHY.bark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  aiIcon: {
+    width: s(30),
+    height: s(30),
+    borderRadius: s(10),
+    backgroundColor: ACCENT + "1F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiDot: {
+    width: s(8),
+    height: s(8),
+    borderRadius: s(4),
+    backgroundColor: ACCENT,
   },
   input: {
     flex: 1,
-    fontSize: fontSize(14),
+    fontSize: fontSize(13),
     paddingVertical: s(10),
-    color: "#1A1A1A",
+    paddingHorizontal: s(10),
+    color: EARTHY.bark,
+    fontFamily: FONTS.bodyLight,
     outlineStyle: "none" as any,
   },
   sendButton: {
@@ -142,24 +167,25 @@ const styles = StyleSheet.create({
     paddingVertical: s(8),
   },
   sendCircle: {
-    width: s(28),
-    height: s(28),
-    borderRadius: s(14),
-    backgroundColor: "#1A1A1A",
+    width: s(30),
+    height: s(30),
+    borderRadius: s(10),
+    backgroundColor: ACCENT,
     alignItems: "center",
     justifyContent: "center",
     marginRight: s(2),
   },
   sendCircleDisabled: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: EARTHY.sand,
+    opacity: 0.5,
   },
   sendArrow: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: fontSize(16),
     fontWeight: "700",
     marginTop: -1,
   },
   sendArrowDisabled: {
-    color: "#9CA3AF",
+    color: EARTHY.stoneLight,
   },
 });

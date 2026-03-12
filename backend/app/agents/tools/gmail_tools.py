@@ -9,7 +9,7 @@ from app.agents.core.registry import tool_registry
 logger = logging.getLogger("calendarai.tools.gmail")
 
 
-@tool_registry.register("search_gmail")
+@tool_registry.register("search_gmail", category="email")
 async def search_gmail(
     ctx: RunContext[AgentDeps],
     query: str,
@@ -59,7 +59,7 @@ async def search_gmail(
         return {"error": f"Gmail search failed: {e}"}
 
 
-@tool_registry.register("get_email_content")
+@tool_registry.register("get_email_content", category="email")
 async def get_email_content(
     ctx: RunContext[AgentDeps],
     message_id: str,

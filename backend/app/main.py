@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import events, agents, gmail, ical, sharing, profile
+from app.routers import events, agents, gmail, ical, sharing, profile, resy
 
 app = FastAPI(title="CalendarAI", version="0.1.0")
 
@@ -26,6 +26,7 @@ app.include_router(gmail.router)
 app.include_router(ical.router)
 app.include_router(sharing.router)
 app.include_router(profile.router)
+app.include_router(resy.router)
 
 
 @app.get("/api/health")

@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 interface Props {
   visible: boolean;
@@ -133,22 +134,25 @@ function to24(hour12: number, ampm: "AM" | "PM"): number {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.25)",
+    backgroundColor: "rgba(59,47,38,0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: EARTHY.white,
     borderRadius: s(20),
     padding: s(24),
     width: s(300),
-    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+    shadowColor: EARTHY.bark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
     elevation: 8,
-  } as any,
+  },
   title: {
     fontSize: fontSize(16),
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.heading,
+    color: EARTHY.bark,
     textAlign: "center",
     marginBottom: s(20),
   },
@@ -164,19 +168,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: s(12),
-    backgroundColor: "#F3F4F6",
+    backgroundColor: EARTHY.sandLight,
   },
   cellActive: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
   },
   cellText: {
     fontSize: fontSize(16),
-    color: "#1A1A1A",
-    fontWeight: "500",
+    color: EARTHY.bark,
+    fontFamily: FONTS.bodyMedium,
   },
   cellTextActive: {
-    color: "#fff",
-    fontWeight: "600",
+    color: EARTHY.white,
+    fontFamily: FONTS.bodyMedium,
   },
   ampmRow: {
     flexDirection: "row",
@@ -188,17 +192,17 @@ const styles = StyleSheet.create({
     paddingVertical: s(10),
     paddingHorizontal: s(28),
     borderRadius: s(12),
-    backgroundColor: "#F3F4F6",
+    backgroundColor: EARTHY.sandLight,
   },
   ampmActive: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
   },
   ampmText: {
     fontSize: fontSize(15),
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.bodyMedium,
+    color: EARTHY.bark,
   },
   ampmTextActive: {
-    color: "#fff",
+    color: EARTHY.white,
   },
 });

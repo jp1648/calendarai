@@ -11,7 +11,7 @@ from app.agents.tools.web_tools import web_search, web_extract
 logger = logging.getLogger("calendarai.tools.restaurant")
 
 
-@tool_registry.register("search_restaurants")
+@tool_registry.register("search_restaurants", category="reservations")
 async def search_restaurants(
     ctx: RunContext[AgentDeps],
     cuisine: str,
@@ -64,7 +64,7 @@ async def search_restaurants(
     }
 
 
-@tool_registry.register("get_restaurant_details")
+@tool_registry.register("get_restaurant_details", category="reservations")
 async def get_restaurant_details(
     ctx: RunContext[AgentDeps],
     url: str,
@@ -87,7 +87,7 @@ async def get_restaurant_details(
     }
 
 
-@tool_registry.register("create_reservation_event")
+@tool_registry.register("create_reservation_event", category="reservations")
 async def create_reservation_event(
     ctx: RunContext[AgentDeps],
     restaurant_name: str,

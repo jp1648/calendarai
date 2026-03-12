@@ -8,7 +8,7 @@ from app.agents.deps import AgentDeps
 from app.agents.core.registry import tool_registry
 
 
-@tool_registry.register("get_current_time")
+@tool_registry.register("get_current_time", category="time")
 async def get_current_time(ctx: RunContext[AgentDeps]) -> str:
     """Get the current date and time in the user's timezone."""
     tz = ZoneInfo(ctx.deps.user_timezone)
@@ -16,7 +16,7 @@ async def get_current_time(ctx: RunContext[AgentDeps]) -> str:
     return now.isoformat()
 
 
-@tool_registry.register("parse_datetime")
+@tool_registry.register("parse_datetime", category="time")
 async def parse_datetime(
     ctx: RunContext[AgentDeps],
     text: str,

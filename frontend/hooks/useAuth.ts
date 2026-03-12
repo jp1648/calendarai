@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { useChatStore } from "../stores/chatStore";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -35,6 +36,7 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    useChatStore.getState().reset();
     await supabase.auth.signOut();
   };
 

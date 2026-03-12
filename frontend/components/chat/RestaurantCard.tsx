@@ -1,4 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
+import { s, fontSize } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 interface Restaurant {
   name: string;
@@ -19,8 +21,8 @@ export default function RestaurantCard({ restaurant }: { restaurant: Restaurant 
   const renderStars = (rating: number) => {
     const full = Math.floor(rating);
     const half = rating % 1 >= 0.5;
-    let stars = "★".repeat(full);
-    if (half) stars += "½";
+    let stars = "\u2605".repeat(full);
+    if (half) stars += "\u00BD";
     return stars;
   };
 
@@ -63,12 +65,12 @@ export default function RestaurantCard({ restaurant }: { restaurant: Restaurant 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
-    marginVertical: 4,
+    backgroundColor: EARTHY.white,
+    borderRadius: s(12),
+    padding: s(14),
+    marginVertical: s(4),
     borderWidth: 1,
-    borderColor: "#E5E5E5",
+    borderColor: EARTHY.sand,
     maxWidth: "85%" as any,
     alignSelf: "flex-start",
   },
@@ -76,42 +78,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: s(4),
   },
   name: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
+    fontSize: fontSize(16),
+    fontFamily: FONTS.bodyMedium,
+    color: EARTHY.bark,
     flex: 1,
-    marginRight: 8,
+    marginRight: s(8),
   },
   rating: {
-    fontSize: 13,
-    color: "#FF9500",
-    fontWeight: "600",
+    fontSize: fontSize(13),
+    color: "#E8A87C",
+    fontFamily: FONTS.bodyMedium,
   },
   meta: {
     flexDirection: "row",
-    marginBottom: 4,
+    marginBottom: s(4),
   },
   metaText: {
-    fontSize: 13,
-    color: "#666",
+    fontSize: fontSize(13),
+    color: EARTHY.barkSoft,
+    fontFamily: FONTS.body,
   },
   address: {
-    fontSize: 13,
-    color: "#999",
-    marginBottom: 8,
+    fontSize: fontSize(13),
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyLight,
+    marginBottom: s(8),
   },
   bookButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    paddingVertical: 8,
+    backgroundColor: ACCENT,
+    borderRadius: s(8),
+    paddingVertical: s(8),
     alignItems: "center",
   },
   bookText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
+    color: EARTHY.white,
+    fontSize: fontSize(14),
+    fontFamily: FONTS.bodyMedium,
   },
 });

@@ -14,6 +14,7 @@ class ProfileResponse(BaseModel):
     default_location: str
     email: str
     gmail_connected: bool
+    resy_connected: bool
     ical_feed_token: str
 
 
@@ -29,7 +30,7 @@ async def get_profile(user: AuthUser = Depends(get_current_user)):
     sb = get_supabase_admin()
     result = (
         sb.table("profiles")
-        .select("full_name, phone, timezone, default_location, email, gmail_connected, ical_feed_token")
+        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token")
         .eq("id", user.id)
         .single()
         .execute()
@@ -49,7 +50,7 @@ async def update_profile(
 
     result = (
         sb.table("profiles")
-        .select("full_name, phone, timezone, default_location, email, gmail_connected, ical_feed_token")
+        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token")
         .eq("id", user.id)
         .single()
         .execute()

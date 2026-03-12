@@ -4,6 +4,31 @@ import { supabase } from "../lib/supabase";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 
+const TOOL_STATUS: Record<string, string> = {
+  // Calendar
+  create_event: "Creating event",
+  list_events: "Checking your calendar",
+  delete_event: "Removing event",
+  update_event: "Updating event",
+  // Gmail
+  search_gmail: "Searching your email",
+  get_email_content: "Reading email",
+  // Web / search
+  web_search: "Searching the web",
+  // Browser
+  browser_navigate: "Opening website",
+  browser_act: "Interacting with page",
+  browser_extract: "Reading page content",
+  browser_observe: "Looking at page",
+  // Booking
+  create_booking_event: "Creating booking",
+  mindbody_search_studios: "Finding studios",
+  mindbody_get_classes: "Loading classes",
+  mindbody_book_class: "Booking class",
+  // Social
+  send_booking_invite: "Sending invite",
+};
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
@@ -100,12 +125,28 @@ export function useAgentStream() {
                 store.setThreadId(data.thread_id);
                 break;
               case "text_delta":
+                store.setStatusText("");
                 store.appendAgentDelta(data.delta);
                 break;
-              case "tool_call":
+              case "tool_call": {
                 hadToolCalls = true;
+                // Finalize current assistant bubble so cursor disappears
+                const state = useChatStore.getState();
+                const lastMsg = state.messages[state.messages.length - 1];
+                if (lastMsg?.role === "assistant" && lastMsg.streaming) {
+                  useChatStore.setState({
+                    messages: [
+                      ...state.messages.slice(0, -1),
+                      { ...lastMsg, streaming: false },
+                    ],
+                  });
+                }
                 store.setThinking(true);
+                store.setStatusText(
+                  TOOL_STATUS[data.tool] || data.tool.replace(/_/g, " ")
+                );
                 break;
+              }
               case "tool_result":
                 break;
               case "done":

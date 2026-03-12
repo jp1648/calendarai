@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 interface Props {
   children: React.ReactNode;
@@ -52,31 +53,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FAFAFA",
+    backgroundColor: EARTHY.cream,
     padding: 32,
   },
   title: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.heading,
+    color: EARTHY.bark,
     marginBottom: 8,
   },
   message: {
     fontSize: 14,
-    color: "#6B7280",
+    color: EARTHY.barkSoft,
+    fontFamily: FONTS.bodyLight,
     textAlign: "center",
     marginBottom: 24,
     lineHeight: 20,
   },
   button: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
     borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
   buttonText: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: FONTS.bodyMedium,
   },
 });

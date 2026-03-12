@@ -28,6 +28,8 @@ from app.agents.core.schemas import (
 )
 from app.agents.core.registry import agent_registry
 from app.auth.rate_limit import update_token_usage
+from app.services.encryption import decrypt
+from app.services.gmail import get_gmail_credentials
 from app.services.supabase import get_supabase_admin
 
 logger = logging.getLogger("calendarai.agents")
@@ -69,13 +71,29 @@ class AgentRunner:
         sb = get_supabase_admin()
         profile = (
             sb.table("profiles")
-            .select("timezone, full_name, phone, default_location")
+            .select("timezone, full_name, phone, default_location, gmail_connected, gmail_refresh_token, resy_connected, resy_auth_token")
             .eq("id", user_id)
             .single()
             .execute()
         )
         data = profile.data or {}
         tz = data.get("timezone", "America/New_York")
+
+        # Auto-fetch Gmail credentials if connected and not already provided
+        if not gmail_credentials and data.get("gmail_connected") and data.get("gmail_refresh_token"):
+            try:
+                refresh_token = decrypt(data["gmail_refresh_token"])
+                gmail_credentials = get_gmail_credentials(refresh_token)
+            except Exception:
+                pass  # Gmail tools will gracefully fail if creds unavailable
+
+        # Decrypt Resy auth token if connected
+        resy_token = None
+        if data.get("resy_connected") and data.get("resy_auth_token"):
+            try:
+                resy_token = decrypt(data["resy_auth_token"])
+            except Exception:
+                pass
 
         return AgentDeps(
             user_id=user_id,
@@ -86,6 +104,7 @@ class AgentRunner:
             user_default_location=data.get("default_location", ""),
             supabase=sb,
             gmail_credentials=gmail_credentials,
+            resy_auth_token=resy_token,
         )
 
     async def run(
@@ -119,6 +138,8 @@ class AgentRunner:
         if deps.user_phone:
             context_parts.append(f"User phone: {deps.user_phone}")
         context_parts.append(f"User email: {deps.user_email}")
+        if deps.resy_auth_token:
+            context_parts.append("Resy: connected")
         user_input = f"[{' | '.join(context_parts)}]\n\n{request.input}"
 
         start = time.monotonic()
@@ -217,6 +238,8 @@ class AgentRunner:
         if deps.user_phone:
             context_parts.append(f"User phone: {deps.user_phone}")
         context_parts.append(f"User email: {deps.user_email}")
+        if deps.resy_auth_token:
+            context_parts.append("Resy: connected")
         user_input = f"[{' | '.join(context_parts)}]\n\n{input_text}"
 
         request = AgentRequest(agent_name=agent_name, input=input_text)

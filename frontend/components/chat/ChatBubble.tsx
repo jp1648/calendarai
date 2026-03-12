@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Linking } from "react-native";
 import type { ChatMessage } from "../../stores/chatStore";
 import { formatTime } from "../../lib/dates";
 import { s, fontSize as fs } from "../../lib/responsive";
+import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 const URL_REGEX = /(https?:\/\/[^\s,)]+)/g;
 
@@ -60,7 +61,7 @@ function EventCardBubble({
     <View style={styles.eventCard}>
       <View style={styles.eventAccent} />
       <View style={styles.eventBody}>
-        <Text style={styles.eventCheck}>✓</Text>
+        <Text style={styles.eventCheck}>{"\u2713"}</Text>
         <View style={{ flex: 1 }}>
           <Text style={styles.eventTitle}>{event.title}</Text>
           <Text style={styles.eventTime}>
@@ -89,6 +90,7 @@ export default function ChatBubble({ message }: { message: ChatMessage }) {
   if (message.role === "assistant") {
     return (
       <View style={[styles.bubble, styles.assistantBubble]}>
+        <View style={styles.aiDot} />
         <RichText style={styles.assistantText} streaming={message.streaming}>
           {message.content}
         </RichText>
@@ -113,45 +115,59 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: ACCENT,
   },
   assistantBubble: {
     alignSelf: "flex-start",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: EARTHY.sandLight,
+    flexDirection: "row",
+    gap: s(8),
+    alignItems: "flex-start",
+  },
+  aiDot: {
+    width: s(6),
+    height: s(6),
+    borderRadius: s(3),
+    backgroundColor: "#86C3B9",
+    marginTop: s(6),
+    flexShrink: 0,
   },
   userText: {
-    color: "#fff",
+    color: EARTHY.white,
     fontSize: fs(13),
     lineHeight: fs(18),
+    fontFamily: FONTS.body,
   },
   assistantText: {
-    color: "#1A1A1A",
+    color: EARTHY.bark,
     fontSize: fs(13),
     lineHeight: fs(18),
+    fontFamily: FONTS.bodyLight,
+    flex: 1,
   },
   bold: {
-    fontWeight: "700",
+    fontFamily: FONTS.bodyMedium,
   },
   link: {
-    color: "#6366F1",
+    color: ACCENT,
     textDecorationLine: "underline",
   },
   cursor: {
-    color: "#6366F1",
+    color: ACCENT,
     fontWeight: "300",
   },
   eventCard: {
     alignSelf: "flex-start",
     maxWidth: "82%" as any,
     flexDirection: "row",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "rgba(163,188,140,0.15)",
     borderRadius: s(12),
     marginVertical: s(3),
     overflow: "hidden",
   },
   eventAccent: {
     width: s(3),
-    backgroundColor: "#22C55E",
+    backgroundColor: "#A3BC8C",
   },
   eventBody: {
     flex: 1,
@@ -162,24 +178,26 @@ const styles = StyleSheet.create({
     gap: s(5),
   },
   eventCheck: {
-    color: "#22C55E",
+    color: "#6E8A56",
     fontSize: fs(12),
-    fontWeight: "700",
+    fontFamily: FONTS.bodyMedium,
     marginTop: 1,
   },
   eventTitle: {
     fontSize: fs(13),
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontFamily: FONTS.bodyMedium,
+    color: EARTHY.bark,
   },
   eventTime: {
     fontSize: fs(11),
-    color: "#6B7280",
+    color: EARTHY.barkSoft,
+    fontFamily: FONTS.bodyLight,
     marginTop: s(1),
   },
   eventLocation: {
     fontSize: fs(11),
-    color: "#9CA3AF",
+    color: EARTHY.stone,
+    fontFamily: FONTS.bodyLight,
     marginTop: s(1),
   },
 });

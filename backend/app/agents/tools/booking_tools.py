@@ -10,7 +10,7 @@ from app.agents.core.registry import tool_registry
 logger = logging.getLogger("calendarai.tools.booking")
 
 
-@tool_registry.register("create_booking_event")
+@tool_registry.register("create_booking_event", category="booking")
 async def create_booking_event(
     ctx: RunContext[AgentDeps],
     title: str,

@@ -29,15 +29,12 @@ async def _get_jwks() -> dict:
     return _jwks_cache
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> AuthUser:
+async def validate_token(token: str) -> AuthUser:
+    """Validate a JWT string and return AuthUser. Raises HTTPException on failure."""
     try:
-        # Get the key ID from the token header
-        header = jwt.get_unverified_header(credentials.credentials)
+        header = jwt.get_unverified_header(token)
         jwks = await _get_jwks()
 
-        # Find the matching key
         key = None
         for k in jwks.get("keys", []):
             if k["kid"] == header.get("kid"):
@@ -51,7 +48,7 @@ async def get_current_user(
             )
 
         payload = jwt.decode(
-            credentials.credentials,
+            token,
             key,
             algorithms=[header.get("alg", "ES256")],
             audience="authenticated",
@@ -69,3 +66,9 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {e}",
         )
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> AuthUser:
+    return await validate_token(credentials.credentials)

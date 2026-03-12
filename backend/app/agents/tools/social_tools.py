@@ -15,7 +15,7 @@ _FREE_BUSY_LEVELS = {"free_busy", "view", "book", "book_confirm"}
 _DIRECT_BOOK_LEVELS = {"book"}
 
 
-@tool_registry.register("lookup_user")
+@tool_registry.register("lookup_user", category="social")
 async def lookup_user(
     ctx: RunContext[AgentDeps],
     email: str,
@@ -54,7 +54,7 @@ async def lookup_user(
     }
 
 
-@tool_registry.register("check_mutual_availability")
+@tool_registry.register("check_mutual_availability", category="social")
 async def check_mutual_availability(
     ctx: RunContext[AgentDeps],
     user_ids: list[str],
@@ -142,7 +142,7 @@ async def check_mutual_availability(
     }
 
 
-@tool_registry.register("send_booking_invite")
+@tool_registry.register("send_booking_invite", category="social")
 async def send_booking_invite(
     ctx: RunContext[AgentDeps],
     to_user_id: str,

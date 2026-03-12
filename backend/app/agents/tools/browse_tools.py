@@ -66,7 +66,7 @@ def _browse(url: str, wait_ms: int = 3000) -> dict:
     }
 
 
-@tool_registry.register("browse_page")
+@tool_registry.register("browse_page", category="browser")
 async def browse_page(
     ctx: RunContext[AgentDeps],
     url: str,
