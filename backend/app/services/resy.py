@@ -23,16 +23,13 @@ async def _fetch_resy_api_key() -> str:
         return _cached_api_key
 
     async with httpx.AsyncClient(timeout=15) as client:
-        # Get the homepage to find the app bundle filename
         resp = await client.get("https://resy.com")
         resp.raise_for_status()
-        # Find the app bundle URL (e.g. modules/app.<hash>.js)
         match = re.search(r'src="((?:modules/)?app\.[a-f0-9]+\.js)"', resp.text)
         if not match:
             raise ValueError("Could not find Resy app bundle URL")
         bundle_url = f"https://resy.com/{match.group(1)}"
 
-        # Fetch the bundle and extract the API key
         resp = await client.get(bundle_url)
         resp.raise_for_status()
         key_match = re.search(r'api[_-]?[Kk]ey\s*[:=]\s*["\']([A-Za-z0-9_-]{20,})["\']', resp.text)
@@ -89,7 +86,6 @@ class ResyClient:
                     data={"email": email, "password": password},
                 )
             if resp.status_code in (401, 419) and attempt == 0:
-                # API key may be stale — refetch and retry once
                 logger.warning("Resy auth returned %s, refreshing API key", resp.status_code)
                 await self._invalidate_api_key()
                 continue
@@ -103,7 +99,6 @@ class ResyClient:
         if not token:
             raise ValueError("No token in Resy login response")
 
-        # Extract first payment method ID
         payment_methods = body.get("payment_methods", [])
         payment_id = ""
         if isinstance(payment_methods, list) and payment_methods:
@@ -171,8 +166,26 @@ class ResyClient:
                 })
         return slots
 
+    async def get_book_token(self, config_id: str, day: str, party_size: int, token: str | None = None) -> str:
+        """Exchange a slot's config token for a book_token via /3/details."""
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                f"{BASE_URL}/3/details",
+                headers=await self._auth_headers(),
+                json={
+                    "config_id": token or config_id,
+                    "day": day,
+                    "party_size": party_size,
+                },
+            )
+            resp.raise_for_status()
+        book_token = resp.json().get("book_token", {}).get("value", "")
+        if not book_token:
+            raise ValueError("No book_token returned from details endpoint")
+        return book_token
+
     async def book(self, book_token: str, payment_method_id: str) -> dict:
-        """Complete a reservation booking."""
+        """Complete a reservation booking using a book_token from get_book_token."""
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
                 f"{BASE_URL}/3/book",

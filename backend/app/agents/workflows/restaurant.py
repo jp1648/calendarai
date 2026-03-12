@@ -43,7 +43,7 @@ class ResyAdapter(PlatformAdapter):
         client = ResyClient(auth_token=deps.resy_auth_token)
         return await client.find_slots(int(venue_id), date, party_size)
 
-    async def book(self, deps: AgentDeps, booking_ref: str) -> dict:
+    async def book(self, deps: AgentDeps, booking_ref: str, date: str = "", party_size: int = 2) -> dict:
         from app.services.encryption import decrypt
         from app.services.resy import ResyClient
         from app.services.supabase import get_supabase_admin
@@ -66,7 +66,17 @@ class ResyAdapter(PlatformAdapter):
             return {"error": "Could not read payment method. Reconnect Resy in Settings."}
 
         client = ResyClient(auth_token=deps.resy_auth_token)
-        confirmation = await client.book(booking_ref, payment_id)
+
+        # Step 1: Exchange slot token for a book_token via /3/details
+        book_token = await client.get_book_token(
+            config_id=booking_ref,
+            day=date,
+            party_size=party_size,
+            token=booking_ref,
+        )
+
+        # Step 2: Book using the book_token
+        confirmation = await client.book(book_token, payment_id)
         return {"success": True, "confirmation": confirmation}
 
 
@@ -219,7 +229,7 @@ async def book_restaurant(
 
     # --- Book via adapter ---
     try:
-        result = await adapter.book(ctx.deps, token)
+        result = await adapter.book(ctx.deps, token, date=date, party_size=party_size)
     except Exception as e:
         logger.error("book_restaurant error: %s", e)
         return {"error": f"Booking failed: {e}. Try browser tools instead."}
