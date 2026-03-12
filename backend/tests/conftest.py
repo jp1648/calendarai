@@ -19,6 +19,7 @@ class FakeQueryBuilder:
     """Chainable mock that simulates Supabase query builder."""
 
     _data: list[dict] | None = None
+    _single: bool = False
 
     def select(self, *a, **kw):
         return self
@@ -51,12 +52,24 @@ class FakeQueryBuilder:
     def limit(self, n):
         return self
 
+    def maybe_single(self):
+        self._single = True
+        return self
+
     def single(self):
+        self._single = True
         return self
 
     def execute(self):
         result = MagicMock()
-        result.data = self._data if self._data is not None else []
+        data = self._data if self._data is not None else []
+        if self._single:
+            if isinstance(data, dict):
+                result.data = data
+            else:
+                result.data = data[0] if data else None
+        else:
+            result.data = data
         return result
 
 

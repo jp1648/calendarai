@@ -36,28 +36,35 @@ def _browse(url: str, wait_ms: int = 3000) -> dict:
     session = client.sessions.create(project_id=settings.browserbase_project_id)
     logger.info("browse session=%s url=%s", session.id, url[:100])
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.connect_over_cdp(session.connect_url)
-        context = browser.contexts[0]
-        page = context.pages[0]
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.connect_over_cdp(session.connect_url)
+            context = browser.contexts[0]
+            page = context.pages[0]
 
-        page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(wait_ms)
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(wait_ms)
 
-        title = page.title()
-        # Extract main text content, stripping nav/footer noise
-        text = page.evaluate("""() => {
-            const selectors = ['main', 'article', '[role="main"]', '.content', '#content'];
-            for (const sel of selectors) {
-                const el = document.querySelector(sel);
-                if (el && el.innerText.trim().length > 100) return el.innerText.trim();
-            }
-            return document.body.innerText.trim();
-        }""")
+            title = page.title()
+            # Extract main text content, stripping nav/footer noise
+            text = page.evaluate("""() => {
+                const selectors = ['main', 'article', '[role="main"]', '.content', '#content'];
+                for (const sel of selectors) {
+                    const el = document.querySelector(sel);
+                    if (el && el.innerText.trim().length > 100) return el.innerText.trim();
+                }
+                return document.body.innerText.trim();
+            }""")
 
-        current_url = page.url
-        page.close()
-        browser.close()
+            current_url = page.url
+            page.close()
+            browser.close()
+    finally:
+        # Always release the session to avoid hitting the concurrent session limit
+        try:
+            client.sessions.update(session.id, status="REQUEST_RELEASE")
+        except Exception:
+            logger.warning("Failed to release browse session %s", session.id)
 
     return {
         "url": current_url,

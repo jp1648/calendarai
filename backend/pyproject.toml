@@ -21,13 +21,15 @@ dependencies = [
     "tavily-python>=0.5",
     "browserbase>=1.0",
     "playwright>=1.40",
-    "stagehand>=3.0",
     "python-multipart>=0.0.22",
+    "browser-use>=0.12.1",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = ["integration: tests that require a running backend and real credentials"]
+addopts = "-m 'not integration'"
 
 [build-system]
 requires = ["hatchling"]
