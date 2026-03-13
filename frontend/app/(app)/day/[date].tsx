@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,13 +19,14 @@ import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 export default function DayScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
-  const parsedDate = parseISO(date);
-  const { events, loading, refresh } = useEventsQuery(parsedDate);
+  const initialDate = parseISO(date);
+  const [currentDate, setCurrentDate] = useState(initialDate);
+  const { events, loading, refresh } = useEventsQuery(currentDate);
 
   const dayEvents = useMemo(
     () =>
-      events.filter((e) => isSameDay(parseISO(e.start_time), parsedDate)),
-    [events, date]
+      events.filter((e) => isSameDay(parseISO(e.start_time), currentDate)),
+    [events, currentDate]
   );
 
   const onEventPress = useCallback(
@@ -36,20 +37,31 @@ export default function DayScreen() {
   );
 
   const goToNextDay = useCallback(() => {
-    const next = addDays(parsedDate, 1);
-    router.replace(`/(app)/day/${format(next, "yyyy-MM-dd")}`);
-  }, [parsedDate, router]);
+    setCurrentDate((prev) => addDays(prev, 1));
+  }, []);
 
   const goToPrevDay = useCallback(() => {
-    const prev = subDays(parsedDate, 1);
-    router.replace(`/(app)/day/${format(prev, "yyyy-MM-dd")}`);
-  }, [parsedDate, router]);
+    setCurrentDate((prev) => subDays(prev, 1));
+  }, []);
+
+  const goBack = useCallback(() => {
+    try {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(app)");
+      }
+    } catch {
+      // Fallback if router state is stale
+      router.replace("/(app)");
+    }
+  }, [router]);
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: format(parsedDate, "EEEE, MMM d"),
+          title: format(currentDate, "EEEE, MMM d"),
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push("/(app)/event/new")}
@@ -61,17 +73,19 @@ export default function DayScreen() {
         }}
       />
       <SafeAreaView style={styles.container}>
-        <DayView
-          date={parsedDate}
-          events={dayEvents}
-          onEventPress={onEventPress}
-          onNextDay={goToNextDay}
-          onPrevDay={goToPrevDay}
-          onDoubleTap={() => router.navigate("/(app)")}
-          refreshing={loading}
-          onRefresh={refresh}
-        />
-        <ChatPanel />
+        <View style={styles.sheetContainer}>
+          <DayView
+            date={currentDate}
+            events={dayEvents}
+            onEventPress={onEventPress}
+            onNextDay={goToNextDay}
+            onPrevDay={goToPrevDay}
+            onDoubleTap={goBack}
+            refreshing={loading}
+            onRefresh={refresh}
+          />
+          <ChatPanel />
+        </View>
         <NaturalLanguageBar onEventCreated={refresh} />
       </SafeAreaView>
     </>
@@ -82,6 +96,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: EARTHY.cream,
+  },
+  sheetContainer: {
+    flex: 1,
   },
   headerButton: {
     marginRight: s(4),

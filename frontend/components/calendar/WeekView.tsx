@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -16,6 +16,9 @@ import { formatTime } from "../../lib/dates";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SWIPE_THRESHOLD = 50;
+
+// Entrance animation plays only on first calendar load, not on back-navigation
+let hasPlayedEntrance = false;
 
 interface Props {
   weekOffset: number;
@@ -52,6 +55,11 @@ export default function WeekView({
   const dates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
   const today = useMemo(() => new Date(), []);
   const translateX = useSharedValue(0);
+  const shouldAnimate = useRef(!hasPlayedEntrance);
+
+  useEffect(() => {
+    hasPlayedEntrance = true;
+  }, []);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
@@ -92,7 +100,7 @@ export default function WeekView({
           return (
             <Animated.View
               key={i}
-              entering={FadeInDown.delay(i * 40).duration(250)}
+              entering={shouldAnimate.current ? FadeInDown.delay(i * 40).duration(250) : undefined}
               style={[styles.dayColumn, dayIsToday && styles.dayColumnToday]}
             >
               <TouchableOpacity

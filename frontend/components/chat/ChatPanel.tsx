@@ -1,33 +1,18 @@
-import { useRef, useEffect } from "react";
-import {
-  View,
-  FlatList,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useRef, useEffect, useMemo, useCallback } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Pressable } from "react-native";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withRepeat,
   withSequence,
   withTiming,
-  runOnJS,
   Easing,
 } from "react-native-reanimated";
 import { useChatStore, type ChatMessage } from "../../stores/chatStore";
 import ChatBubble from "./ChatBubble";
 import { s, fontSize } from "../../lib/responsive";
-import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
-
-const SCREEN_HEIGHT = Dimensions.get("window").height;
-const HANDLE_HEIGHT = s(28);
-const SNAP_HALF = SCREEN_HEIGHT * 0.5;
-const SNAP_FULL = SCREEN_HEIGHT * 0.88;
-const SPRING_CONFIG = { damping: 20, stiffness: 150 };
+import { EARTHY, FONTS } from "../../lib/theme";
 
 function ThinkingIndicator({ statusText }: { statusText: string }) {
   const pulse = useSharedValue(1);
@@ -50,9 +35,7 @@ function ThinkingIndicator({ statusText }: { statusText: string }) {
   return (
     <View style={styles.statusRow}>
       <Animated.View style={[styles.statusDot, dotStyle]} />
-      <Text style={styles.statusText}>
-        {statusText || "Thinking"}
-      </Text>
+      <Text style={styles.statusText}>{statusText || "Thinking"}</Text>
     </View>
   );
 }
@@ -64,152 +47,123 @@ export default function ChatPanel() {
   const reset = useChatStore((s) => s.reset);
   const thinking = useChatStore((s) => s.thinking);
   const statusText = useChatStore((s) => s.statusText);
-  const listRef = useRef<FlatList<ChatMessage>>(null);
-  const panelHeight = useSharedValue(0);
-  const startHeight = useSharedValue(0);
+  const sheetRef = useRef<BottomSheet>(null);
+  const listRef = useRef<any>(null);
   const hasMessages = messages.length > 0;
 
-  const snapToNearest = (currentH: number, velocityY: number) => {
-    "worklet";
-    // velocityY negative = swiping up, positive = swiping down
-    const snaps = [HANDLE_HEIGHT, SNAP_HALF, SNAP_FULL];
-    // Bias toward the direction of velocity
-    let target = currentH;
-    if (Math.abs(velocityY) > 300) {
-      target = velocityY < 0
-        ? currentH + 150  // swiping up -> favor higher snap
-        : currentH - 150; // swiping down -> favor lower snap
-    }
-    let best = snaps[0];
-    let bestDist = Math.abs(target - best);
-    for (let i = 1; i < snaps.length; i++) {
-      const d = Math.abs(target - snaps[i]);
-      if (d < bestDist) {
-        bestDist = d;
-        best = snaps[i];
-      }
-    }
-    return best;
-  };
+  // Collapsed peek, half screen, near-full screen
+  const snapPoints = useMemo(() => [s(40), "50%", "88%"], []);
 
+  // Sync store state → sheet position
   useEffect(() => {
     if (!hasMessages) {
-      panelHeight.value = withSpring(0, SPRING_CONFIG);
+      sheetRef.current?.close();
       return;
     }
-    panelHeight.value = withSpring(
-      isOpen ? SNAP_HALF : HANDLE_HEIGHT,
-      SPRING_CONFIG,
-    );
-  }, [isOpen, hasMessages, panelHeight]);
+    sheetRef.current?.snapToIndex(isOpen ? 1 : 0);
+  }, [isOpen, hasMessages]);
 
+  // Auto-scroll when new messages arrive
   useEffect(() => {
     if (messages.length > 0 && isOpen) {
       setTimeout(() => {
         listRef.current?.scrollToEnd({ animated: true });
-      }, 50);
+      }, 100);
     }
   }, [messages.length, isOpen]);
 
-  const syncOpenState = (height: number) => {
-    setOpen(height > HANDLE_HEIGHT);
-  };
+  // Sync sheet position → store state
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index < 0) return;
+      setOpen(index > 0);
+    },
+    [setOpen],
+  );
 
-  const panGesture = Gesture.Pan()
-    .onBegin(() => {
-      startHeight.value = panelHeight.value;
-    })
-    .onUpdate((e) => {
-      // Dragging up = negative translationY = increase height
-      const newH = startHeight.value - e.translationY;
-      panelHeight.value = Math.max(HANDLE_HEIGHT, Math.min(SNAP_FULL, newH));
-    })
-    .onEnd((e) => {
-      const snapped = snapToNearest(panelHeight.value, e.velocityY);
-      panelHeight.value = withSpring(snapped, SPRING_CONFIG);
-      runOnJS(syncOpenState)(snapped);
-    });
+  // Tap handle to toggle collapsed ↔ half
+  const handleToggle = useCallback(() => {
+    if (isOpen) {
+      sheetRef.current?.snapToIndex(0);
+    } else {
+      sheetRef.current?.snapToIndex(1);
+    }
+  }, [isOpen]);
 
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    const target = panelHeight.value <= HANDLE_HEIGHT ? SNAP_HALF : HANDLE_HEIGHT;
-    panelHeight.value = withSpring(target, SPRING_CONFIG);
-    runOnJS(syncOpenState)(target);
-  });
-
-  const composedGesture = Gesture.Race(panGesture, tapGesture);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: panelHeight.value,
-  }));
-
-  const isExpanded = isOpen;
+  const renderHandle = useCallback(
+    () => (
+      <Pressable onPress={handleToggle} style={styles.handleContainer}>
+        <View style={styles.handleBar} />
+      </Pressable>
+    ),
+    [handleToggle],
+  );
 
   if (!hasMessages) return null;
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      <GestureDetector gesture={composedGesture}>
-        <Animated.View style={styles.handleRow}>
-          <View style={styles.handleBarContainer}>
-            <View style={styles.handleBar} />
-          </View>
-          {isExpanded && (
-            <TouchableOpacity
-              style={styles.newChatButton}
-              onPress={() => reset()}
-              hitSlop={8}
-            >
-              <Text style={styles.newChatText}>New chat</Text>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-      </GestureDetector>
-      {isExpanded && (
-        <View style={styles.chatHeader}>
+    <BottomSheet
+      ref={sheetRef}
+      index={isOpen ? 1 : 0}
+      snapPoints={snapPoints}
+      onChange={handleSheetChange}
+      enablePanDownToClose={false}
+      handleComponent={renderHandle}
+      backgroundStyle={styles.background}
+      style={styles.sheet}
+      animateOnMount
+    >
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <View style={styles.headerLeft}>
           <View style={styles.chatHeaderDot} />
           <Text style={styles.chatHeaderText}>Ask your calendar</Text>
         </View>
-      )}
-      <View style={styles.content}>
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(_, i) => String(i)}
-          renderItem={({ item }) => <ChatBubble message={item} />}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            thinking ? <ThinkingIndicator statusText={statusText} /> : null
-          }
-        />
+        <TouchableOpacity
+          style={styles.newChatButton}
+          onPress={() => reset()}
+          hitSlop={8}
+        >
+          <Text style={styles.newChatText}>New chat</Text>
+        </TouchableOpacity>
       </View>
-    </Animated.View>
+
+      {/* Messages — BottomSheetFlatList handles scroll↔drag handoff natively */}
+      <BottomSheetFlatList<ChatMessage>
+        ref={listRef}
+        data={messages}
+        keyExtractor={(_: ChatMessage, i: number) => String(i)}
+        renderItem={({ item }: { item: ChatMessage }) => <ChatBubble message={item} />}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListFooterComponent={
+          thinking ? <ThinkingIndicator statusText={statusText} /> : null
+        }
+      />
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  sheet: {
+    borderTopLeftRadius: s(20),
+    borderTopRightRadius: s(20),
+    shadowColor: EARTHY.bark,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  background: {
     backgroundColor: EARTHY.white,
     borderTopLeftRadius: s(20),
     borderTopRightRadius: s(20),
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: EARTHY.sand,
-    overflow: "hidden",
   },
-  handleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: s(36),
-  },
-  handleBarContainer: {
-    flex: 1,
+  handleContainer: {
     alignItems: "center",
     justifyContent: "center",
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+    paddingTop: s(10),
+    paddingBottom: s(6),
   },
   handleBar: {
     width: s(36),
@@ -217,14 +171,19 @@ const styles = StyleSheet.create({
     borderRadius: s(2),
     backgroundColor: EARTHY.fog,
   },
-  chatHeader: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: s(8),
+    justifyContent: "space-between",
     paddingHorizontal: s(16),
     paddingBottom: s(10),
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: EARTHY.sand,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: s(8),
   },
   chatHeaderDot: {
     width: s(7),
@@ -240,19 +199,13 @@ const styles = StyleSheet.create({
   newChatButton: {
     paddingHorizontal: s(10),
     paddingVertical: s(4),
-    marginRight: s(8),
-    marginLeft: "auto" as any,
     borderRadius: s(6),
     backgroundColor: EARTHY.sandLight,
-    zIndex: 1,
   },
   newChatText: {
     color: EARTHY.barkSoft,
     fontSize: fontSize(12),
     fontFamily: FONTS.bodyMedium,
-  },
-  content: {
-    flex: 1,
   },
   list: {
     paddingHorizontal: s(10),

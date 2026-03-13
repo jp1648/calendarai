@@ -10,8 +10,8 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
-import { useEventStore } from "../../../stores/eventStore";
 import { format, parseISO } from "../../../lib/dates";
 import DatePickerModal from "../../../components/input/DatePickerModal";
 import TimePickerModal from "../../../components/input/TimePickerModal";
@@ -20,7 +20,7 @@ import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
 export default function NewEventScreen() {
   const router = useRouter();
-  const addEvent = useEventStore((s) => s.addEvent);
+  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -48,7 +48,7 @@ export default function NewEventScreen() {
         start_time: `${date}T${startTime}:00`,
         end_time: `${date}T${endTime}:00`,
       });
-      addEvent(event);
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       router.back();
     } catch (e: any) {
       Alert.alert("Error", e.message);
