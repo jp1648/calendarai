@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import BottomSheet, { BottomSheetFlatList, BottomSheetBackgroundProps } from "@gorhom/bottom-sheet";
 import Animated, {
   useSharedValue,
@@ -52,7 +52,6 @@ export default function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
   const isOpen = useChatStore((s) => s.isOpen);
   const setOpen = useChatStore((s) => s.setOpen);
-  const reset = useChatStore((s) => s.reset);
   const thinking = useChatStore((s) => s.thinking);
   const statusText = useChatStore((s) => s.statusText);
   const sheetRef = useRef<BottomSheet>(null);

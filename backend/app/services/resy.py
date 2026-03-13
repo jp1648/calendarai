@@ -139,7 +139,8 @@ class ResyClient:
 
         results = []
         for hit in hits:
-            platform_id = str(hit.get("id", {}).get("resy", ""))
+            raw_id = hit.get("id", "")
+            platform_id = str(raw_id.get("resy", "")) if isinstance(raw_id, dict) else str(raw_id)
             results.append({
                 "platform_id": platform_id,
                 "name": hit.get("name", ""),
@@ -231,6 +232,9 @@ class ResyClient:
         for r in resp.json().get("reservations", []):
             venue = r.get("venue", {})
             reservation = r.get("reservation", {})
+            # venue["id"] can be a dict {"resy": 123} or an int — handle both
+            raw_id = venue.get("id", "")
+            venue_id = str(raw_id.get("resy", "")) if isinstance(raw_id, dict) else str(raw_id)
             reservations.append({
                 "resy_token": reservation.get("resy_token", ""),
                 "restaurant": venue.get("name", ""),
@@ -238,7 +242,7 @@ class ResyClient:
                 "time": reservation.get("time_slot", ""),
                 "party_size": reservation.get("num_seats", 0),
                 "confirmation": reservation.get("confirmation_number", ""),
-                "venue_id": str(venue.get("id", {}).get("resy", "")),
+                "venue_id": venue_id,
             })
         return reservations
 

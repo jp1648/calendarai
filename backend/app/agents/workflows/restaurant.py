@@ -422,6 +422,9 @@ async def cancel_resy_reservation(
         resy_token: The reservation's resy_token from list_resy_reservations
         restaurant_name: Restaurant name (for confirmation message)
     """
+    if not resy_token or not resy_token.strip():
+        return {"error": "resy_token is required. Call list_resy_reservations first."}
+
     adapter = _ADAPTERS.get("resy")
     if not adapter or not adapter.is_available(ctx.deps):
         return {"error": "Resy is not connected. Ask user to connect in Settings."}
@@ -430,7 +433,7 @@ async def cancel_resy_reservation(
     client = ResyClient(auth_token=ctx.deps.resy_auth_token)
 
     try:
-        result = await client.cancel_reservation(resy_token)
+        result = await client.cancel_reservation(resy_token.strip())
     except Exception as e:
         logger.error("cancel_resy_reservation failed: %s", e)
         return {"error": f"Cancellation failed: {e}"}

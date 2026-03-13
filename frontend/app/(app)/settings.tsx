@@ -133,7 +133,7 @@ export default function SettingsScreen() {
   const disconnectResy = async () => {
     try {
       await api.resy.unlink();
-      queryClient.setQueryData<Profile>(["profile"], (prev) => prev ? { ...prev, resy_connected: false } : undefined as any);
+      queryClient.setQueryData<Profile | undefined>(["profile"], (prev) => prev ? { ...prev, resy_connected: false } : prev);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }

@@ -61,9 +61,8 @@ _META_TOOLS = [
 ]
 
 # ---------------------------------------------------------------------------
-# System prompt — identity and behavior ONLY. No tool-routing instructions.
-# The LLM selects tools from their descriptions. For unfamiliar tasks,
-# it can call discover_tools to browse available categories.
+# System prompt — identity, behavior, and deterministic tool-routing rules.
+# Uses IF/THEN patterns for reliable tool selection per Gemini 3 best practices.
 # ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = """\
