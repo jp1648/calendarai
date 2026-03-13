@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import { useAgentStream } from "../../hooks/useAgentStream";
 import { useChatStore } from "../../stores/chatStore";
@@ -24,7 +23,7 @@ interface Props {
 
 export default function NaturalLanguageBar({ onEventCreated }: Props) {
   const [input, setInput] = useState("");
-  const { sendMessage } = useAgentStream();
+  const { sendMessage, abort } = useAgentStream();
   const { location } = useLocation();
   const streaming = useChatStore((s) => s.streaming);
   const isOpen = useChatStore((s) => s.isOpen);
@@ -89,7 +88,13 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
           editable={!streaming}
         />
         {streaming ? (
-          <ActivityIndicator style={styles.sendButton} color={EARTHY.stone} />
+          <TouchableOpacity
+            style={[styles.sendButton, styles.stopCircle]}
+            onPress={abort}
+            activeOpacity={0.7}
+          >
+            <View style={styles.stopIcon} />
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[
@@ -187,5 +192,20 @@ const styles = StyleSheet.create({
   },
   sendArrowDisabled: {
     color: EARTHY.stoneLight,
+  },
+  stopCircle: {
+    width: s(30),
+    height: s(30),
+    borderRadius: s(10),
+    backgroundColor: EARTHY.stone,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    marginRight: s(2),
+  },
+  stopIcon: {
+    width: s(10),
+    height: s(10),
+    borderRadius: s(2),
+    backgroundColor: EARTHY.white,
   },
 });

@@ -13,6 +13,8 @@ class AgentDeps:
     user_full_name: str = ""
     user_phone: str = ""
     user_default_location: str = ""
+    user_latitude: float | None = None
+    user_longitude: float | None = None
     gmail_credentials: Any | None = None
     resy_auth_token: str | None = None
     browser_session_id: str | None = None

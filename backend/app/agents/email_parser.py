@@ -3,8 +3,8 @@ from app.agents.core.registry import agent_registry
 
 email_parser_config = AgentConfig(
     name="email_parser",
-    model="openrouter:anthropic/claude-haiku-4.5",
-    description="Parse Gmail messages for flights, reservations, and events",
+    model="openrouter:google/gemini-3.1-flash-lite-preview",
+    description="Parse Gmail messages for flights, reservations, and events (Gemini 3.1 Flash Lite)",
     trigger_mode=TriggerMode.PUSH,
     system_prompt=(
         "You are an email parsing agent. You receive Gmail message IDs and your job is to:\n"

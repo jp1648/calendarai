@@ -42,7 +42,9 @@ class ResyAdapter(PlatformAdapter):
         from app.services.resy import ResyClient
 
         client = ResyClient(auth_token=deps.resy_auth_token)
-        return await client.find_slots(int(venue_id), date, party_size)
+        lat = deps.user_latitude or 0
+        lng = deps.user_longitude or 0
+        return await client.find_slots(int(venue_id), date, party_size, lat=lat, lng=lng)
 
     async def book(self, deps: AgentDeps, booking_ref: str, date: str = "", party_size: int = 2) -> dict:
         from app.services.encryption import decrypt
@@ -132,8 +134,77 @@ def _pick_best_venue(venues: list[dict], name: str, location: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Agent tools (2 tools — all the agent ever needs for restaurants)
+# Agent tools
 # ---------------------------------------------------------------------------
+
+@tool_registry.register("browse_available_restaurants", category="reservations")
+async def browse_available_restaurants(
+    ctx: RunContext[AgentDeps],
+    query: str,
+    date: str,
+    party_size: int = 2,
+    location: str = "",
+) -> dict:
+    """Browse restaurants with real-time availability on Resy. Use this when the
+    user wants to DISCOVER restaurants (no specific name), e.g. "dinner near me
+    tonight", "find available reservations", "Italian food tonight".
+
+    Searches Resy directly and checks availability for the top results.
+
+    Args:
+        query: What to search for — cuisine, meal type, vibe (e.g. 'dinner', 'Italian', 'sushi')
+        date: Date in YYYY-MM-DD format
+        party_size: Number of guests (default 2)
+        location: Area or city (uses user's default location if empty)
+    """
+    if not location and ctx.deps.user_default_location:
+        location = ctx.deps.user_default_location
+
+    adapter = _ADAPTERS.get("resy")
+    if not adapter or not adapter.is_available(ctx.deps):
+        return {"error": "Resy is not connected. Ask user to connect in Settings."}
+
+    search_query = f"{query} {location}".strip()
+    logger.info("browse_available_restaurants query=%r date=%s party=%d", search_query, date, party_size)
+
+    try:
+        venues = await adapter.search(ctx.deps, search_query, location=location)
+    except Exception as e:
+        logger.error("browse_available_restaurants search failed: %s", e)
+        return {"error": f"Resy search failed: {e}"}
+
+    if not venues:
+        return {"restaurants": [], "message": "No restaurants found. Try a broader query."}
+
+    # Check availability for top venues
+    results = []
+    for venue in venues[:6]:
+        try:
+            slots = await adapter.find_slots(
+                ctx.deps, venue.get("platform_id", ""), date, party_size,
+            )
+            if slots:
+                results.append({
+                    "name": venue.get("name", ""),
+                    "neighborhood": venue.get("neighborhood", ""),
+                    "cuisine": venue.get("cuisine", ""),
+                    "available_times": [
+                        {"time": s.get("time", ""), "type": s.get("type", ""),
+                         "booking_ref": f"resy:{s.get('token', '')}"}
+                        for s in slots[:8]
+                    ],
+                    "slot_count": len(slots),
+                })
+        except Exception as e:
+            logger.warning("browse_available_restaurants slots failed for %s: %s", venue.get("name"), e)
+            continue
+
+    logger.info("browse_available_restaurants found %d restaurants with availability", len(results))
+    return {
+        "restaurants": results,
+        "message": f"Found {len(results)} restaurants with availability on Resy.",
+    }
+
 
 @tool_registry.register("find_restaurant", category="reservations")
 async def find_restaurant(
@@ -310,3 +381,66 @@ async def book_restaurant(
     logger.info("book_restaurant success platform=%s restaurant=%s", platform, restaurant_name)
     result["message"] = f"Reservation booked at {restaurant_name} via {platform.title()}!"
     return result
+
+
+@tool_registry.register("list_resy_reservations", category="reservations")
+async def list_resy_reservations(
+    ctx: RunContext[AgentDeps],
+) -> dict:
+    """List the user's upcoming Resy reservations. Use this to find reservation
+    details before cancelling or modifying.
+
+    Returns restaurant name, date, time, party size, and the resy_token needed
+    for cancellation.
+    """
+    adapter = _ADAPTERS.get("resy")
+    if not adapter or not adapter.is_available(ctx.deps):
+        return {"error": "Resy is not connected. Ask user to connect in Settings."}
+
+    from app.services.resy import ResyClient
+    client = ResyClient(auth_token=ctx.deps.resy_auth_token)
+
+    try:
+        reservations = await client.list_reservations()
+    except Exception as e:
+        logger.error("list_resy_reservations failed: %s", e)
+        return {"error": f"Failed to fetch reservations: {e}"}
+
+    logger.info("list_resy_reservations found %d upcoming", len(reservations))
+    return {"reservations": reservations}
+
+
+@tool_registry.register("cancel_resy_reservation", category="reservations")
+async def cancel_resy_reservation(
+    ctx: RunContext[AgentDeps],
+    resy_token: str,
+    restaurant_name: str = "",
+) -> dict:
+    """Cancel a Resy reservation. Get the resy_token from list_resy_reservations first.
+
+    Args:
+        resy_token: The reservation's resy_token from list_resy_reservations
+        restaurant_name: Restaurant name (for confirmation message)
+    """
+    if not resy_token or not resy_token.strip():
+        return {"error": "resy_token is required. Call list_resy_reservations first."}
+
+    adapter = _ADAPTERS.get("resy")
+    if not adapter or not adapter.is_available(ctx.deps):
+        return {"error": "Resy is not connected. Ask user to connect in Settings."}
+
+    from app.services.resy import ResyClient
+    client = ResyClient(auth_token=ctx.deps.resy_auth_token)
+
+    try:
+        result = await client.cancel_reservation(resy_token.strip())
+    except Exception as e:
+        logger.error("cancel_resy_reservation failed: %s", e)
+        return {"error": f"Cancellation failed: {e}"}
+
+    logger.info("cancel_resy_reservation success restaurant=%s", restaurant_name)
+    return {
+        "success": True,
+        "message": f"Reservation at {restaurant_name} has been cancelled." if restaurant_name
+                   else "Reservation cancelled.",
+    }

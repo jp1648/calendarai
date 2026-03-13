@@ -8,6 +8,7 @@ LogBox.ignoreLogs([
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "../hooks/useAuth";
+import { api } from "../lib/api";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ToastProvider from "../components/ui/ToastProvider";
@@ -34,6 +35,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Prefetch profile as soon as user is authenticated
+  useEffect(() => {
+    if (session) {
+      queryClient.prefetchQuery({
+        queryKey: ["profile"],
+        queryFn: () => api.profile.get(),
+        staleTime: 1000 * 60 * 10,
+      });
+    }
+  }, [session]);
 
   useEffect(() => {
     if (loading) return;

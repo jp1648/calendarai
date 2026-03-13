@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useChatStore } from "../stores/chatStore";
 import { supabase } from "../lib/supabase";
 
@@ -77,8 +77,35 @@ function processSSEBuffer(
   return remaining;
 }
 
+function finalizeStreamingBubble() {
+  const state = useChatStore.getState();
+  const lastMsg = state.messages[state.messages.length - 1];
+  if (lastMsg?.role === "assistant" && lastMsg.streaming) {
+    useChatStore.setState({
+      messages: [
+        ...state.messages.slice(0, -1),
+        { ...lastMsg, streaming: false },
+      ],
+    });
+  }
+}
+
 export function useAgentStream() {
   const store = useChatStore();
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const abortedRef = useRef(false);
+
+  const abort = useCallback(() => {
+    abortedRef.current = true;
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    finalizeStreamingBubble();
+    store.setStreaming(false);
+    store.setThinking(false);
+    store.setStatusText("");
+  }, [store]);
 
   const sendMessage = useCallback(
     async (
@@ -86,6 +113,7 @@ export function useAgentStream() {
       location?: { latitude: number; longitude: number; displayName: string } | null,
     ): Promise<StreamResult | null> => {
       const threadId = useChatStore.getState().threadId;
+      abortedRef.current = false;
       store.setStreaming(true);
       store.addUserMessage(input);
       store.setThinking(true);
@@ -185,11 +213,19 @@ export function useAgentStream() {
             if (buffer.length > 0) {
               processSSEBuffer(buffer + "\n", currentEvent, handleEvent);
             }
+            xhrRef.current = null;
             store.setStreaming(false);
             resolve();
           };
 
+          xhr.onabort = () => {
+            // Intentional abort — cleanup already handled by abort()
+            xhrRef.current = null;
+            resolve();
+          };
+
           xhr.onerror = () => {
+            if (abortedRef.current) return; // Don't show error on intentional abort
             store.appendAgentDelta("Connection error");
             store.setStreaming(false);
             reject(new Error("XHR failed"));
@@ -202,6 +238,7 @@ export function useAgentStream() {
           };
 
           xhr.timeout = 120000; // 2 min timeout for long agent runs
+          xhrRef.current = xhr; // Set ref BEFORE send so abort() can always find it
           xhr.send(JSON.stringify(body));
         });
 
@@ -221,5 +258,5 @@ export function useAgentStream() {
     store.reset();
   }, [store]);
 
-  return { sendMessage, reset };
+  return { sendMessage, reset, abort };
 }

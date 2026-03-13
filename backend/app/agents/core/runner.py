@@ -215,11 +215,16 @@ class AgentRunner:
         thread_id: str | None = None,
         gmail_credentials=None,
         location: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> AsyncGenerator[str, None]:
         """Execute an agent with SSE streaming output."""
         config = agent_registry.get_config(agent_name)
         agent = agent_registry.get(agent_name)
         deps = await self.build_deps(user_id, user_email, gmail_credentials)
+        if latitude is not None and longitude is not None:
+            deps.user_latitude = latitude
+            deps.user_longitude = longitude
         sb = deps.supabase
 
         # Load or create thread

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { format, addMonths, subMonths } from "../../lib/dates";
+import { dismissKeyboardOr } from "../../lib/keyboard";
 import { s, fontSize } from "../../lib/responsive";
 import { useEventsQuery } from "../../hooks/useEventsQuery";
 import WeekView, { getWeekDates } from "../../components/calendar/WeekView";
@@ -55,23 +56,39 @@ export default function CalendarScreen() {
   const router = useRouter();
 
   const onDayPress = useCallback(
-    (date: Date) => {
+    dismissKeyboardOr((date: Date) => {
       router.push(`/(app)/day/${format(date, "yyyy-MM-dd")}`);
-    },
+    }),
     [router]
   );
 
   const onEventPress = useCallback(
-    (event: CalendarEvent) => {
+    dismissKeyboardOr((event: CalendarEvent) => {
       router.push(`/(app)/event/${event.id}` as any);
-    },
+    }),
     [router]
   );
 
-  const openPicker = () => {
+  const openPicker = useCallback(dismissKeyboardOr(() => {
     setPickerYear(currentMonth.getFullYear());
     setPickerVisible(true);
-  };
+  }), [currentMonth]);
+
+  const goToSettings = useCallback(dismissKeyboardOr(() => {
+    router.push("/(app)/settings");
+  }), [router]);
+
+  const goToPrevWeek = useCallback(dismissKeyboardOr(() => {
+    setWeekOffset((w) => w - 1);
+  }), []);
+
+  const goToThisWeek = useCallback(dismissKeyboardOr(() => {
+    setWeekOffset(0);
+  }), []);
+
+  const goToNextWeek = useCallback(dismissKeyboardOr(() => {
+    setWeekOffset((w) => w + 1);
+  }), []);
 
   const selectMonth = (monthIndex: number) => {
     // Jump to the week containing the 1st of selected month
@@ -99,7 +116,7 @@ export default function CalendarScreen() {
         <ScreenHeader
           left={<Text style={styles.headerTitle}>calendar<Text style={styles.headerTitleAi}>ai</Text></Text>}
           right={
-            <TouchableOpacity onPress={() => router.push("/(app)/settings")} activeOpacity={0.7}>
+            <TouchableOpacity onPress={goToSettings} activeOpacity={0.7}>
               <Text style={styles.headerButtonText}>Settings</Text>
             </TouchableOpacity>
           }
@@ -113,7 +130,7 @@ export default function CalendarScreen() {
           </TouchableOpacity>
           <View style={styles.navRow}>
             <TouchableOpacity
-              onPress={() => setWeekOffset((w) => w - 1)}
+              onPress={goToPrevWeek}
               style={styles.navButton}
               activeOpacity={0.6}
             >
@@ -121,13 +138,13 @@ export default function CalendarScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.todayButton, weekOffset === 0 && styles.todayButtonActive]}
-              onPress={() => setWeekOffset(0)}
+              onPress={goToThisWeek}
               activeOpacity={0.7}
             >
               <Text style={[styles.todayText, weekOffset === 0 && styles.todayTextActive]}>Today</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => setWeekOffset((w) => w + 1)}
+              onPress={goToNextWeek}
               style={styles.navButton}
               activeOpacity={0.6}
             >
