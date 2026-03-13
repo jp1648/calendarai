@@ -10,13 +10,15 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { CalendarEvent } from "../../../stores/eventStore";
 import { parseISO, format } from "../../../lib/dates";
 import DatePickerModal from "../../../components/input/DatePickerModal";
 import TimePickerModal from "../../../components/input/TimePickerModal";
+import ScreenContainer from "../../../components/ui/ScreenContainer";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { s, fontSize } from "../../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
@@ -61,17 +63,23 @@ export default function EditEventScreen() {
 
   if (fetching) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={EARTHY.bark} />
-      </View>
+      <ScreenContainer>
+        <ScreenHeader left="back" title="Edit Event" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={EARTHY.bark} />
+        </View>
+      </ScreenContainer>
     );
   }
 
   if (fetchError || !existing) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.notFoundText}>Event not found</Text>
-      </View>
+      <ScreenContainer>
+        <ScreenHeader left="back" title="Edit Event" />
+        <View style={styles.centered}>
+          <Text style={styles.notFoundText}>Event not found</Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
@@ -130,16 +138,15 @@ export default function EditEventScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Edit Event",
-          headerRight: () => (
-            <TouchableOpacity onPress={handleDelete} style={styles.headerButton}>
-              <Text style={styles.deleteText}>Delete</Text>
-            </TouchableOpacity>
-          ),
-        }}
+    <ScreenContainer>
+      <ScreenHeader
+        left="back"
+        title="Edit Event"
+        right={
+          <TouchableOpacity onPress={handleDelete} activeOpacity={0.7}>
+            <Text style={styles.deleteText}>Delete</Text>
+          </TouchableOpacity>
+        }
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.label}>Title</Text>
@@ -225,7 +232,7 @@ export default function EditEventScreen() {
         onSelect={setEndTime}
         onClose={() => setEndPickerOpen(false)}
       />
-    </>
+    </ScreenContainer>
   );
 }
 
@@ -247,9 +254,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize(15),
     color: EARTHY.stone,
     fontFamily: FONTS.body,
-  },
-  headerButton: {
-    marginRight: s(4),
   },
   deleteText: {
     color: "#EF4444",

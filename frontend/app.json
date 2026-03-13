@@ -13,7 +13,8 @@
       "backgroundColor": "#F5F0EA"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jp1648.frontend"
     },
     "android": {
       "adaptiveIcon": {

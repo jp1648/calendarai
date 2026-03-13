@@ -4,15 +4,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
 } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { parseISO, format, isSameDay, addDays, subDays } from "../../../lib/dates";
 import { CalendarEvent } from "../../../stores/eventStore";
 import { useEventsQuery } from "../../../hooks/useEventsQuery";
 import DayView from "../../../components/calendar/DayView";
 import ChatPanel from "../../../components/chat/ChatPanel";
 import NaturalLanguageBar from "../../../components/input/NaturalLanguageBar";
+import ScreenContainer from "../../../components/ui/ScreenContainer";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { s, fontSize } from "../../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
@@ -52,60 +53,49 @@ export default function DayScreen() {
         router.replace("/(app)");
       }
     } catch {
-      // Fallback if router state is stale
       router.replace("/(app)");
     }
   }, [router]);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: format(currentDate, "EEEE, MMM d"),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/event/new")}
-              style={styles.headerButton}
-            >
-              <Text style={styles.headerButtonText}>+ New</Text>
-            </TouchableOpacity>
-          ),
-        }}
+    <ScreenContainer>
+      <ScreenHeader
+        left="back"
+        title={format(currentDate, "EEEE, MMM d")}
+        right={
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/event/new")}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.newButtonText}>+ New</Text>
+          </TouchableOpacity>
+        }
       />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.sheetContainer}>
-          <DayView
-            date={currentDate}
-            events={dayEvents}
-            onEventPress={onEventPress}
-            onNextDay={goToNextDay}
-            onPrevDay={goToPrevDay}
-            onDoubleTap={goBack}
-            refreshing={loading}
-            onRefresh={refresh}
-          />
-          <ChatPanel />
-        </View>
-        <NaturalLanguageBar onEventCreated={refresh} />
-      </SafeAreaView>
-    </>
+      <View style={styles.sheetContainer}>
+        <DayView
+          date={currentDate}
+          events={dayEvents}
+          onEventPress={onEventPress}
+          onNextDay={goToNextDay}
+          onPrevDay={goToPrevDay}
+          onDoubleTap={goBack}
+          refreshing={loading}
+          onRefresh={refresh}
+        />
+        <ChatPanel />
+      </View>
+      <NaturalLanguageBar onEventCreated={refresh} />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: EARTHY.cream,
-  },
   sheetContainer: {
     flex: 1,
   },
-  headerButton: {
-    marginRight: s(4),
-  },
-  headerButtonText: {
+  newButtonText: {
     color: ACCENT,
-    fontSize: fontSize(15),
+    fontSize: fontSize(13),
     fontFamily: FONTS.bodyMedium,
   },
 });

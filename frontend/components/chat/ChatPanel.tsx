@@ -51,8 +51,8 @@ export default function ChatPanel() {
   const listRef = useRef<any>(null);
   const hasMessages = messages.length > 0;
 
-  // Collapsed peek, half screen, near-full screen
-  const snapPoints = useMemo(() => [s(40), "50%", "88%"], []);
+  // Handle-only peek, half screen, near-full screen
+  const snapPoints = useMemo(() => [s(20), "50%", "88%"], []);
 
   // Sync store state → sheet position
   useEffect(() => {
@@ -162,8 +162,8 @@ const styles = StyleSheet.create({
   handleContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: s(10),
-    paddingBottom: s(6),
+    paddingTop: s(6),
+    paddingBottom: s(4),
   },
   handleBar: {
     width: s(36),
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    paddingHorizontal: s(14),
+    paddingHorizontal: s(10),
     paddingVertical: s(10),
     marginVertical: s(2),
     gap: s(8),

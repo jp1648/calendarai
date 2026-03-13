@@ -15,6 +15,8 @@ import {
   Platform,
 } from "react-native";
 import { useAuth } from "../../hooks/useAuth";
+import ScreenContainer from "../../components/ui/ScreenContainer";
+import ScreenHeader from "../../components/ui/ScreenHeader";
 import { api } from "../../lib/api";
 import * as Clipboard from "expo-clipboard";
 import { s, fontSize } from "../../lib/responsive";
@@ -159,6 +161,8 @@ export default function SettingsScreen() {
   }
 
   return (
+    <ScreenContainer>
+    <ScreenHeader left="back" title="Settings" />
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.sectionTitle}>Your Info</Text>
       <Text style={styles.helpText}>
@@ -343,6 +347,7 @@ export default function SettingsScreen() {
         </Pressable>
       </Modal>
     </ScrollView>
+    </ScreenContainer>
   );
 }
 

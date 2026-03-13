@@ -4,18 +4,19 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Modal,
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { useRouter, Stack } from "expo-router";
+import { useRouter } from "expo-router";
 import { format, addMonths, subMonths } from "../../lib/dates";
 import { s, fontSize } from "../../lib/responsive";
 import { useEventsQuery } from "../../hooks/useEventsQuery";
 import WeekView, { getWeekDates } from "../../components/calendar/WeekView";
 import ChatPanel from "../../components/chat/ChatPanel";
 import NaturalLanguageBar from "../../components/input/NaturalLanguageBar";
+import ScreenContainer from "../../components/ui/ScreenContainer";
+import ScreenHeader from "../../components/ui/ScreenHeader";
 import { EARTHY, ACCENT, FONTS, CATEGORIES, categorizeEvent, CategoryKey } from "../../lib/theme";
 import { CalendarEvent } from "../../stores/eventStore";
 
@@ -94,23 +95,16 @@ export default function CalendarScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: "",
-          headerLeft: () => (
-            <Text style={styles.headerTitle}>calendar<Text style={styles.headerTitleAi}>ai</Text></Text>
-          ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/settings")}
-              style={styles.headerButton}
-            >
+      <ScreenContainer>
+        <ScreenHeader
+          left={<Text style={styles.headerTitle}>calendar<Text style={styles.headerTitleAi}>ai</Text></Text>}
+          right={
+            <TouchableOpacity onPress={() => router.push("/(app)/settings")} activeOpacity={0.7}>
               <Text style={styles.headerButtonText}>Settings</Text>
             </TouchableOpacity>
-          ),
-        }}
-      />
-      <SafeAreaView style={styles.container}>
+          }
+        />
+
         {/* Week header */}
         <View style={styles.weekHeader}>
           <TouchableOpacity onPress={openPicker}>
@@ -121,18 +115,21 @@ export default function CalendarScreen() {
             <TouchableOpacity
               onPress={() => setWeekOffset((w) => w - 1)}
               style={styles.navButton}
+              activeOpacity={0.6}
             >
               <Text style={styles.navArrow}>{"\u2039"}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.todayButton, weekOffset === 0 && styles.todayButtonDim]}
+              style={[styles.todayButton, weekOffset === 0 && styles.todayButtonActive]}
               onPress={() => setWeekOffset(0)}
+              activeOpacity={0.7}
             >
-              <Text style={styles.todayText}>Today</Text>
+              <Text style={[styles.todayText, weekOffset === 0 && styles.todayTextActive]}>Today</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setWeekOffset((w) => w + 1)}
               style={styles.navButton}
+              activeOpacity={0.6}
             >
               <Text style={styles.navArrow}>{"\u203A"}</Text>
             </TouchableOpacity>
@@ -177,7 +174,7 @@ export default function CalendarScreen() {
         </View>
 
         <NaturalLanguageBar onEventCreated={refresh} />
-      </SafeAreaView>
+      </ScreenContainer>
 
       {/* Month picker modal */}
       <Modal visible={pickerVisible} transparent animationType="fade">
@@ -223,10 +220,6 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: EARTHY.cream,
-  },
   calendarArea: {
     flex: 1,
   },
@@ -239,15 +232,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize(16),
     fontFamily: FONTS.bodyLight,
     color: EARTHY.bark,
-    marginLeft: s(4),
     letterSpacing: 0.5,
   },
   headerTitleAi: {
     color: ACCENT,
     fontFamily: FONTS.bodyMedium,
-  },
-  headerButton: {
-    marginRight: s(4),
   },
   headerButtonText: {
     color: EARTHY.stone,
@@ -285,23 +274,26 @@ const styles = StyleSheet.create({
     padding: s(6),
   },
   navArrow: {
-    fontSize: fontSize(22),
+    fontSize: fontSize(20),
     color: EARTHY.barkSoft,
     fontWeight: "300",
   },
   todayButton: {
-    backgroundColor: ACCENT + "1F",
     borderRadius: s(10),
     paddingVertical: s(5),
     paddingHorizontal: s(12),
+    backgroundColor: EARTHY.sand,
   },
-  todayButtonDim: {
+  todayButtonActive: {
     opacity: 0.4,
   },
   todayText: {
     fontSize: fontSize(12),
     fontFamily: FONTS.bodyMedium,
-    color: ACCENT,
+    color: EARTHY.barkSoft,
+  },
+  todayTextActive: {
+    color: EARTHY.stone,
   },
   summaryBar: {
     flexDirection: "row",

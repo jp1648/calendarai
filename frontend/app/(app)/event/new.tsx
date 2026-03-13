@@ -15,6 +15,8 @@ import { api } from "../../../lib/api";
 import { format, parseISO } from "../../../lib/dates";
 import DatePickerModal from "../../../components/input/DatePickerModal";
 import TimePickerModal from "../../../components/input/TimePickerModal";
+import ScreenContainer from "../../../components/ui/ScreenContainer";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { s, fontSize } from "../../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 
@@ -66,6 +68,8 @@ export default function NewEventScreen() {
   };
 
   return (
+    <ScreenContainer>
+    <ScreenHeader left="back" title="New Event" />
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.label}>Title</Text>
       <TextInput
@@ -150,6 +154,7 @@ export default function NewEventScreen() {
         onClose={() => setEndPickerOpen(false)}
       />
     </ScrollView>
+    </ScreenContainer>
   );
 }
 
