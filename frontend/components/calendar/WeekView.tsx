@@ -148,11 +148,8 @@ export default function WeekView({
                           },
                         ]}
                       >
-                        <Text style={[styles.eventTime, { color: cat.text }]}>
+                        <Text style={[styles.eventTime, { color: cat.text }]} numberOfLines={1}>
                           {formatTime(event.start_time)}
-                        </Text>
-                        <Text style={styles.eventTitle} numberOfLines={1}>
-                          {event.title}
                         </Text>
                       </View>
                     );
@@ -183,11 +180,6 @@ const styles = StyleSheet.create({
   },
   dayColumnToday: {
     backgroundColor: EARTHY.white,
-    shadowColor: EARTHY.bark,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   dayTouchable: {
     flex: 1,
@@ -243,11 +235,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     fontFamily: FONTS.bodyMedium,
     marginBottom: 1,
-  },
-  eventTitle: {
-    fontSize: fontSize(11),
-    color: EARTHY.bark,
-    fontFamily: FONTS.body,
-    lineHeight: fontSize(14),
   },
 });
