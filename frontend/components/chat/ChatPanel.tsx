@@ -1,6 +1,6 @@
 import { useRef, useEffect, useMemo, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Pressable } from "react-native";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList, BottomSheetBackgroundProps } from "@gorhom/bottom-sheet";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,6 +40,14 @@ function ThinkingIndicator({ statusText }: { statusText: string }) {
   );
 }
 
+function SheetBackground({ style }: BottomSheetBackgroundProps) {
+  return (
+    <View style={[style, styles.background]}>
+      <View style={styles.backgroundInner} />
+    </View>
+  );
+}
+
 export default function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
   const isOpen = useChatStore((s) => s.isOpen);
@@ -51,8 +59,9 @@ export default function ChatPanel() {
   const listRef = useRef<any>(null);
   const hasMessages = messages.length > 0;
 
-  // Handle-only peek, half screen, near-full screen
-  const snapPoints = useMemo(() => [s(20), "50%", "88%"], []);
+  // Handle-only peek (just handle height), half screen, near-full screen
+  const HANDLE_HEIGHT = s(24);
+  const snapPoints = useMemo(() => [HANDLE_HEIGHT, "50%", "88%"], []);
 
   // Sync store state → sheet position
   useEffect(() => {
@@ -60,7 +69,7 @@ export default function ChatPanel() {
       sheetRef.current?.close();
       return;
     }
-    sheetRef.current?.snapToIndex(isOpen ? 1 : 0);
+    sheetRef.current?.snapToIndex(isOpen ? 2 : 0);
   }, [isOpen, hasMessages]);
 
   // Auto-scroll when new messages arrive
@@ -81,12 +90,12 @@ export default function ChatPanel() {
     [setOpen],
   );
 
-  // Tap handle to toggle collapsed ↔ half
+  // Tap handle to toggle collapsed ↔ full
   const handleToggle = useCallback(() => {
     if (isOpen) {
       sheetRef.current?.snapToIndex(0);
     } else {
-      sheetRef.current?.snapToIndex(1);
+      sheetRef.current?.snapToIndex(2);
     }
   }, [isOpen]);
 
@@ -104,12 +113,13 @@ export default function ChatPanel() {
   return (
     <BottomSheet
       ref={sheetRef}
-      index={isOpen ? 1 : 0}
+      index={isOpen ? 2 : 0}
       snapPoints={snapPoints}
       onChange={handleSheetChange}
       enablePanDownToClose={false}
       handleComponent={renderHandle}
-      backgroundStyle={styles.background}
+      handleHeight={HANDLE_HEIGHT}
+      backgroundComponent={SheetBackground}
       style={styles.sheet}
       animateOnMount
     >
@@ -119,13 +129,6 @@ export default function ChatPanel() {
           <View style={styles.chatHeaderDot} />
           <Text style={styles.chatHeaderText}>Ask your calendar</Text>
         </View>
-        <TouchableOpacity
-          style={styles.newChatButton}
-          onPress={() => reset()}
-          hitSlop={8}
-        >
-          <Text style={styles.newChatText}>New chat</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Messages — BottomSheetFlatList handles scroll↔drag handoff natively */}
@@ -146,8 +149,6 @@ export default function ChatPanel() {
 
 const styles = StyleSheet.create({
   sheet: {
-    borderTopLeftRadius: s(20),
-    borderTopRightRadius: s(20),
     shadowColor: EARTHY.bark,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
@@ -155,6 +156,11 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   background: {
+    backgroundColor: "transparent",
+  },
+  backgroundInner: {
+    ...StyleSheet.absoluteFillObject,
+    top: s(24),
     backgroundColor: EARTHY.white,
     borderTopLeftRadius: s(20),
     borderTopRightRadius: s(20),
@@ -162,8 +168,7 @@ const styles = StyleSheet.create({
   handleContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: s(6),
-    paddingBottom: s(4),
+    height: s(24),
   },
   handleBar: {
     width: s(36),
@@ -195,17 +200,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.heading,
     fontSize: fontSize(15),
     color: EARTHY.bark,
-  },
-  newChatButton: {
-    paddingHorizontal: s(10),
-    paddingVertical: s(4),
-    borderRadius: s(6),
-    backgroundColor: EARTHY.sandLight,
-  },
-  newChatText: {
-    color: EARTHY.barkSoft,
-    fontSize: fontSize(12),
-    fontFamily: FONTS.bodyMedium,
   },
   list: {
     paddingHorizontal: s(10),

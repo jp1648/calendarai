@@ -118,3 +118,26 @@ async def list_events_for_date(
         .execute()
     )
     return result.data
+
+
+@tool_registry.register("delete_event", category="calendar")
+async def delete_event(
+    ctx: RunContext[AgentDeps],
+    event_id: str,
+) -> dict:
+    """Delete a calendar event by its ID.
+
+    Args:
+        event_id: The UUID of the event to delete
+    """
+    sb = ctx.deps.supabase
+    result = (
+        sb.table("events")
+        .delete()
+        .eq("id", event_id)
+        .eq("user_id", ctx.deps.user_id)
+        .execute()
+    )
+    if not result.data:
+        return {"error": "Event not found"}
+    return {"deleted": True, "event_id": event_id}

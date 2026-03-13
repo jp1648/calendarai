@@ -59,6 +59,8 @@ async def schedule_stream(
     user_input = body.get("input", "")
     thread_id = body.get("thread_id")
     location = body.get("location")
+    latitude = body.get("latitude")
+    longitude = body.get("longitude")
     agent_name = pick_scheduler(user_input)
 
     return StreamingResponse(
@@ -69,6 +71,8 @@ async def schedule_stream(
             user_email=user.email,
             thread_id=thread_id,
             location=location,
+            latitude=latitude,
+            longitude=longitude,
         ),
         media_type="text/event-stream",
         headers={

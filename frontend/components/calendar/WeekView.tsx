@@ -1,5 +1,6 @@
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { dismissKeyboardOr } from "../../lib/keyboard";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -63,6 +64,7 @@ export default function WeekView({
   const today = useMemo(() => new Date(), []);
   const translateX = useSharedValue(0);
   const shouldAnimate = useRef(!hasPlayedEntrance);
+  const handleDayPress = useCallback(dismissKeyboardOr(onDayPress), [onDayPress]);
 
   useEffect(() => {
     hasPlayedEntrance = true;
@@ -112,7 +114,7 @@ export default function WeekView({
             >
               <TouchableOpacity
                 style={styles.dayTouchable}
-                onPress={() => onDayPress(date)}
+                onPress={() => handleDayPress(date)}
                 activeOpacity={0.6}
               >
                 <View style={styles.dayHeader}>

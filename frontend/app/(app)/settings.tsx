@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/useAuth";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
@@ -35,8 +36,12 @@ interface Profile {
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: profile, isLoading: loading } = useQuery<Profile>({
+    queryKey: ["profile"],
+    queryFn: () => api.profile.get(),
+    staleTime: 1000 * 60 * 10,
+  });
   const [saving, setSaving] = useState(false);
 
   // Editable fields
@@ -45,24 +50,14 @@ export default function SettingsScreen() {
   const [timezone, setTimezone] = useState("");
   const [defaultLocation, setDefaultLocation] = useState("");
 
+  // Sync form fields when profile loads
   useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      const data = await api.profile.get();
-      setProfile(data);
-      setFullName(data.full_name);
-      setPhone(data.phone);
-      setTimezone(data.timezone);
-      setDefaultLocation(data.default_location);
-    } catch (e: any) {
-      Alert.alert("Error", e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!profile) return;
+    setFullName(profile.full_name);
+    setPhone(profile.phone);
+    setTimezone(profile.timezone);
+    setDefaultLocation(profile.default_location);
+  }, [profile?.email]);
 
   const saveProfile = async () => {
     setSaving(true);
@@ -73,7 +68,7 @@ export default function SettingsScreen() {
         timezone,
         default_location: defaultLocation,
       });
-      setProfile(updated);
+      queryClient.setQueryData(["profile"], updated);
       Alert.alert("Saved", "Your profile has been updated.");
     } catch (e: any) {
       Alert.alert("Error", e.message);
@@ -131,14 +126,14 @@ export default function SettingsScreen() {
       }
     } finally {
       setResyConnecting(false);
-      await loadProfile();
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
     }
   };
 
   const disconnectResy = async () => {
     try {
       await api.resy.unlink();
-      setProfile((prev) => (prev ? { ...prev, resy_connected: false } : null));
+      queryClient.setQueryData<Profile>(["profile"], (prev) => prev ? { ...prev, resy_connected: false } : undefined as any);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }

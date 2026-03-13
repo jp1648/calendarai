@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../lib/api";
 
 interface AgentResponse {
@@ -12,36 +12,34 @@ interface AgentResponse {
 }
 
 export function useAgent() {
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const scheduleMutation = useMutation<AgentResponse, Error, string>({
+    mutationFn: (input: string) => api.agents.schedule(input),
+  });
+
+  const runMutation = useMutation<AgentResponse, Error, { agentName: string; input: string }>({
+    mutationFn: ({ agentName, input }) => api.agents.run(agentName, input),
+  });
 
   const schedule = async (input: string): Promise<AgentResponse | null> => {
-    setProcessing(true);
-    setError(null);
     try {
-      const result = await api.agents.schedule(input);
-      return result;
-    } catch (e: any) {
-      setError(e.message);
+      return await scheduleMutation.mutateAsync(input);
+    } catch {
       return null;
-    } finally {
-      setProcessing(false);
     }
   };
 
   const run = async (agentName: string, input: string): Promise<AgentResponse | null> => {
-    setProcessing(true);
-    setError(null);
     try {
-      const result = await api.agents.run(agentName, input);
-      return result;
-    } catch (e: any) {
-      setError(e.message);
+      return await runMutation.mutateAsync({ agentName, input });
+    } catch {
       return null;
-    } finally {
-      setProcessing(false);
     }
   };
 
-  return { schedule, run, processing, error };
+  return {
+    schedule,
+    run,
+    processing: scheduleMutation.isPending || runMutation.isPending,
+    error: scheduleMutation.error?.message ?? runMutation.error?.message ?? null,
+  };
 }

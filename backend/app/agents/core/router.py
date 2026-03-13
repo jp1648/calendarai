@@ -84,6 +84,18 @@ _complex = Route(
         "i want to try thai food this weekend",
         "dinner reservations for 6 people saturday night",
         "recommend a brunch spot for sunday",
+        "find me restaurants near me with available reservations",
+        "what restaurants have availability tonight",
+        "find reservations near me for dinner",
+        "search for restaurants with open tables tonight",
+        "find me a place to eat tonight",
+        "any good dinner spots available right now",
+        # Reservation management
+        "cancel my reservation",
+        "cancel my dinner reservation tonight",
+        "cancel my resy reservation",
+        "show my upcoming reservations",
+        "what reservations do I have",
         # Doctor / medical
         "schedule a doctor appointment",
         "find a dermatologist near me",

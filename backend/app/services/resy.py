@@ -148,14 +148,17 @@ class ResyClient:
             })
         return results
 
-    async def find_slots(self, venue_id: int, date: str, party_size: int) -> list[dict]:
+    async def find_slots(
+        self, venue_id: int, date: str, party_size: int,
+        lat: float = 0, lng: float = 0,
+    ) -> list[dict]:
         """Find available reservation slots."""
         logger.info("find_slots venue_id=%s date=%s party_size=%d", venue_id, date, party_size)
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
                 f"{BASE_URL}/4/find",
                 headers=await self._auth_headers(),
-                params={"venue_id": venue_id, "day": date, "party_size": party_size, "lat": "0", "long": "0"},
+                params={"venue_id": venue_id, "day": date, "party_size": party_size, "lat": str(lat), "long": str(lng)},
             )
             resp.raise_for_status()
 
@@ -210,6 +213,43 @@ class ResyClient:
                     "struct_payment_method": f'{{"id":{payment_method_id}}}',
                     "source_id": "resy.com-venue-details",
                 },
+            )
+            resp.raise_for_status()
+        return resp.json()
+
+    async def list_reservations(self) -> list[dict]:
+        """List the user's upcoming Resy reservations."""
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(
+                f"{BASE_URL}/3/user/reservations",
+                headers=await self._auth_headers(),
+                params={"limit": 20, "offset": 0, "type": "upcoming"},
+            )
+            resp.raise_for_status()
+
+        reservations = []
+        for r in resp.json().get("reservations", []):
+            venue = r.get("venue", {})
+            reservation = r.get("reservation", {})
+            reservations.append({
+                "resy_token": reservation.get("resy_token", ""),
+                "restaurant": venue.get("name", ""),
+                "date": reservation.get("day", ""),
+                "time": reservation.get("time_slot", ""),
+                "party_size": reservation.get("num_seats", 0),
+                "confirmation": reservation.get("confirmation_number", ""),
+                "venue_id": str(venue.get("id", {}).get("resy", "")),
+            })
+        return reservations
+
+    async def cancel_reservation(self, resy_token: str) -> dict:
+        """Cancel a Resy reservation by its resy_token."""
+        logger.info("cancel_reservation token=%s", resy_token[:20])
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                f"{BASE_URL}/3/cancel",
+                headers=await self._auth_headers(),
+                data={"resy_token": resy_token},
             )
             resp.raise_for_status()
         return resp.json()

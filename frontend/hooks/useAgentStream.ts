@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useChatStore } from "../stores/chatStore";
 import { supabase } from "../lib/supabase";
 
@@ -79,6 +79,17 @@ function processSSEBuffer(
 
 export function useAgentStream() {
   const store = useChatStore();
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+
+  const abort = useCallback(() => {
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    store.setStreaming(false);
+    store.setThinking(false);
+    store.setStatusText("");
+  }, [store]);
 
   const sendMessage = useCallback(
     async (
@@ -185,6 +196,7 @@ export function useAgentStream() {
             if (buffer.length > 0) {
               processSSEBuffer(buffer + "\n", currentEvent, handleEvent);
             }
+            xhrRef.current = null;
             store.setStreaming(false);
             resolve();
           };
@@ -202,6 +214,7 @@ export function useAgentStream() {
           };
 
           xhr.timeout = 120000; // 2 min timeout for long agent runs
+          xhrRef.current = xhr;
           xhr.send(JSON.stringify(body));
         });
 
@@ -221,5 +234,5 @@ export function useAgentStream() {
     store.reset();
   }, [store]);
 
-  return { sendMessage, reset };
+  return { sendMessage, reset, abort };
 }
