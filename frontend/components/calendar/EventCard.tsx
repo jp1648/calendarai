@@ -37,7 +37,11 @@ export default function EventCard({ event, compact, onPress }: Props) {
 
   if (onPress) {
     return (
-      <TouchableOpacity activeOpacity={0.6} onPress={() => onPress(event)}>
+      <TouchableOpacity
+        activeOpacity={0.6}
+        onPress={() => onPress(event)}
+        style={{ flex: 1 }}
+      >
         {card}
       </TouchableOpacity>
     );

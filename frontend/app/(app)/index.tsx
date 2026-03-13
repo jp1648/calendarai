@@ -157,7 +157,7 @@ export default function CalendarScreen() {
           </View>
         )}
 
-        {/* Week view */}
+        {/* Week view + chat sheet */}
         <View style={styles.calendarArea}>
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -173,9 +173,9 @@ export default function CalendarScreen() {
               onPrevWeek={() => setWeekOffset((w) => w - 1)}
             />
           )}
+          <ChatPanel />
         </View>
 
-        <ChatPanel />
         <NaturalLanguageBar onEventCreated={refresh} />
       </SafeAreaView>
 

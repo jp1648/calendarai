@@ -1,10 +1,10 @@
-import { useRef, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { useRef, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   runOnJS,
   FadeInDown,
 } from "react-native-reanimated";
@@ -17,6 +17,7 @@ import { EARTHY, FONTS } from "../../lib/theme";
 const HOUR_HEIGHT = s(52);
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SWIPE_THRESHOLD = 50;
+const DOUBLE_TAP_DELAY = 300;
 
 interface Props {
   date: Date;
@@ -41,6 +42,7 @@ export default function DayView({
 }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const translateX = useSharedValue(0);
+  const lastTapTime = useRef(0);
 
   useEffect(() => {
     setTimeout(() => {
@@ -61,8 +63,21 @@ export default function DayView({
     return { top, height };
   };
 
+  // JS-based double-tap — works reliably inside ScrollView, no gesture handler conflicts
+  const handleTimelinePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+      lastTapTime.current = 0;
+      onDoubleTap?.();
+    } else {
+      lastTapTime.current = now;
+    }
+  }, [onDoubleTap]);
+
+  // Pan: horizontal swipe for day navigation
   const panGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
     .onUpdate((e) => {
       translateX.value = e.translationX * 0.3;
     })
@@ -72,16 +87,11 @@ export default function DayView({
       } else if (e.translationX > SWIPE_THRESHOLD && onPrevDay) {
         runOnJS(onPrevDay)();
       }
-      translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+      translateX.value = withTiming(0, { duration: 180 });
+    })
+    .onFinalize(() => {
+      translateX.value = withTiming(0, { duration: 180 });
     });
-
-  const doubleTapGesture = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      if (onDoubleTap) runOnJS(onDoubleTap)();
-    });
-
-  const composedGesture = Gesture.Race(panGesture, doubleTapGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -95,7 +105,7 @@ export default function DayView({
   };
 
   return (
-    <GestureDetector gesture={composedGesture}>
+    <GestureDetector gesture={panGesture}>
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <ScrollView
           ref={scrollRef}
@@ -110,7 +120,7 @@ export default function DayView({
             ) : undefined
           }
         >
-          <View style={styles.timeline}>
+          <Pressable onPress={handleTimelinePress} style={styles.timeline}>
             {HOURS.map((hour) => (
               <View key={hour} style={styles.hourRow}>
                 <Text style={styles.hourLabel}>{formatHour(hour)}</Text>
@@ -137,7 +147,7 @@ export default function DayView({
                 <Text style={styles.emptyHint}>Use the input below to add one</Text>
               </View>
             )}
-          </View>
+          </Pressable>
         </ScrollView>
       </Animated.View>
     </GestureDetector>

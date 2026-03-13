@@ -8,10 +8,12 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
-import { useEventStore, CalendarEvent } from "../../../stores/eventStore";
+import { CalendarEvent } from "../../../stores/eventStore";
 import { parseISO, format } from "../../../lib/dates";
 import DatePickerModal from "../../../components/input/DatePickerModal";
 import TimePickerModal from "../../../components/input/TimePickerModal";
@@ -21,11 +23,17 @@ import { EARTHY, ACCENT, FONTS } from "../../../lib/theme";
 export default function EditEventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const events = useEventStore((s) => s.events);
-  const updateEvent = useEventStore((s) => s.updateEvent);
-  const removeEvent = useEventStore((s) => s.removeEvent);
+  const queryClient = useQueryClient();
 
-  const existing = events.find((e) => e.id === id);
+  const {
+    data: existing,
+    isLoading: fetching,
+    error: fetchError,
+  } = useQuery<CalendarEvent>({
+    queryKey: ["event", id],
+    queryFn: () => api.events.get(id),
+    staleTime: 1000 * 60,
+  });
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -51,7 +59,15 @@ export default function EditEventScreen() {
     setEndTime(format(end, "HH:mm"));
   }, [existing?.id]);
 
-  if (!existing) {
+  if (fetching) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={EARTHY.bark} />
+      </View>
+    );
+  }
+
+  if (fetchError || !existing) {
     return (
       <View style={styles.centered}>
         <Text style={styles.notFoundText}>Event not found</Text>
@@ -66,14 +82,15 @@ export default function EditEventScreen() {
     }
     setLoading(true);
     try {
-      const updated = await api.events.update(id, {
+      await api.events.update(id, {
         title,
         description,
         location,
         start_time: `${date}T${startTime}:00`,
         end_time: `${date}T${endTime}:00`,
       });
-      updateEvent(updated);
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event", id] });
       router.back();
     } catch (e: any) {
       Alert.alert("Error", e.message);
@@ -92,7 +109,7 @@ export default function EditEventScreen() {
           setLoading(true);
           try {
             await api.events.delete(id);
-            removeEvent(id);
+            queryClient.invalidateQueries({ queryKey: ["events"] });
             router.back();
           } catch (e: any) {
             Alert.alert("Error", e.message);

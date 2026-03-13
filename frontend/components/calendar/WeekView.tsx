@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -9,13 +9,23 @@ import Animated, {
   FadeInDown,
 } from "react-native-reanimated";
 import { CalendarEvent } from "../../stores/eventStore";
-import { format, parseISO, isSameDay } from "../../lib/dates";
+import { format, parseISO, isSameDay, formatTime as _ft } from "../../lib/dates";
+
+/** Duration in minutes between two ISO timestamps */
+function durationMins(startIso: string, endIso: string): number {
+  const s = parseISO(startIso);
+  const e = parseISO(endIso);
+  return Math.max(15, (e.getTime() - s.getTime()) / 60000);
+}
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS, CATEGORIES, categorizeEvent } from "../../lib/theme";
 import { formatTime } from "../../lib/dates";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SWIPE_THRESHOLD = 50;
+
+// Entrance animation plays only on first calendar load, not on back-navigation
+let hasPlayedEntrance = false;
 
 interface Props {
   weekOffset: number;
@@ -52,6 +62,11 @@ export default function WeekView({
   const dates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
   const today = useMemo(() => new Date(), []);
   const translateX = useSharedValue(0);
+  const shouldAnimate = useRef(!hasPlayedEntrance);
+
+  useEffect(() => {
+    hasPlayedEntrance = true;
+  }, []);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
@@ -92,7 +107,7 @@ export default function WeekView({
           return (
             <Animated.View
               key={i}
-              entering={FadeInDown.delay(i * 40).duration(250)}
+              entering={shouldAnimate.current ? FadeInDown.delay(i * 40).duration(250) : undefined}
               style={[styles.dayColumn, dayIsToday && styles.dayColumnToday]}
             >
               <TouchableOpacity
@@ -129,6 +144,9 @@ export default function WeekView({
                 <View style={styles.eventsContainer}>
                   {dayEvents.map((event, j) => {
                     const cat = CATEGORIES[categorizeEvent(event)];
+                    const mins = durationMins(event.start_time, event.end_time);
+                    // Scale: 30min → s(28), 60min → s(44), 120min → s(76)
+                    const cardHeight = Math.max(s(28), s(12) + (mins / 60) * s(32));
                     return (
                       <View
                         key={event.id || j}
@@ -136,15 +154,12 @@ export default function WeekView({
                           styles.eventCard,
                           {
                             backgroundColor: cat.bg,
-                            borderLeftColor: cat.border,
+                            minHeight: cardHeight,
                           },
                         ]}
                       >
-                        <Text style={[styles.eventTime, { color: cat.text }]}>
+                        <Text style={[styles.eventTime, { color: cat.text }]} numberOfLines={1}>
                           {formatTime(event.start_time)}
-                        </Text>
-                        <Text style={styles.eventTitle} numberOfLines={1}>
-                          {event.title}
                         </Text>
                       </View>
                     );
@@ -175,11 +190,6 @@ const styles = StyleSheet.create({
   },
   dayColumnToday: {
     backgroundColor: EARTHY.white,
-    shadowColor: EARTHY.bark,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   dayTouchable: {
     flex: 1,
@@ -225,21 +235,12 @@ const styles = StyleSheet.create({
   },
   eventCard: {
     borderRadius: s(9),
-    borderLeftWidth: 2.5,
-    paddingVertical: s(6),
-    paddingHorizontal: s(6),
+    paddingVertical: s(5),
+    paddingHorizontal: s(4),
   },
   eventTime: {
     fontSize: fontSize(9),
     fontWeight: "500",
-    letterSpacing: 0.3,
     fontFamily: FONTS.bodyMedium,
-    marginBottom: 1,
-  },
-  eventTitle: {
-    fontSize: fontSize(11),
-    color: EARTHY.bark,
-    fontFamily: FONTS.body,
-    lineHeight: fontSize(14),
   },
 });
