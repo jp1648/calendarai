@@ -18,6 +18,6 @@ COPY app/ app/
 RUN addgroup --system app && adduser --system --ingroup app app
 USER app
 
-EXPOSE 8000
+EXPOSE ${PORT:-8000}
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

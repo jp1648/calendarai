@@ -50,6 +50,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         .catch(() => setProfileLoaded(true));
     } else {
       setProfileLoaded(false);
+      queryClient.removeQueries({ queryKey: ["profile"] });
     }
   }, [session]);
 
@@ -59,15 +60,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inOnboardingGroup = segments[0] === "(onboarding)";
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (session && (inAuthGroup || (!inOnboardingGroup && profileLoaded))) {
-      if (inAuthGroup) {
-        // Just logged in — check if onboarding needed
-        const profile = queryClient.getQueryData<{ full_name: string }>(["profile"]);
-        if (!profile?.full_name) {
-          router.replace("/(onboarding)/welcome");
-        } else {
-          router.replace("/(app)");
-        }
+    } else if (session && profileLoaded && !inOnboardingGroup) {
+      const profile = queryClient.getQueryData<{ full_name: string }>(["profile"]);
+      if (!profile?.full_name) {
+        router.replace("/(onboarding)/welcome");
+      } else if (inAuthGroup) {
+        router.replace("/(app)");
       }
     }
   }, [session, loading, segments, profileLoaded]);

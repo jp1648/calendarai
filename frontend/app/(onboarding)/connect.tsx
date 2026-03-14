@@ -8,7 +8,7 @@ import {
   Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
@@ -18,6 +18,7 @@ import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 export default function ConnectScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.profile.get(),
@@ -35,6 +36,9 @@ export default function ConnectScreen() {
       } else {
         Linking.openURL(url);
       }
+      // Poll for profile update after OAuth window opens
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 5000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 15000);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
