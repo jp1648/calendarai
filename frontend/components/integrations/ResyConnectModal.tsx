@@ -44,6 +44,7 @@ export default function ResyConnectModal({ visible, onClose, onConnected }: Prop
     setResyError("");
     try {
       await api.resy.connect(resyEmail, resyPassword);
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
       onConnected?.();
       handleClose();
     } catch (e: any) {
@@ -51,13 +52,10 @@ export default function ResyConnectModal({ visible, onClose, onConnected }: Prop
       if (msg.includes("401")) {
         setResyError("Invalid email or password.");
       } else {
-        // Connect may have succeeded server-side even if response parsing failed
-        onConnected?.();
-        handleClose();
+        setResyError(msg || "Could not connect to Resy. Please try again.");
       }
     } finally {
       setResyConnecting(false);
-      await queryClient.invalidateQueries({ queryKey: ["profile"] });
     }
   };
 

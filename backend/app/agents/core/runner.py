@@ -230,7 +230,7 @@ class AgentRunner:
         # Load or create thread
         history: list[ModelMessage] = []
         if thread_id:
-            history = _load_thread(sb, thread_id)
+            history = _load_thread(sb, thread_id, user_id)
         else:
             thread_id = str(uuid4())
 
@@ -394,12 +394,13 @@ class AgentRunner:
 
 # -- Thread storage helpers --
 
-def _load_thread(sb, thread_id: str) -> list[ModelMessage]:
+def _load_thread(sb, thread_id: str, user_id: str) -> list[ModelMessage]:
     """Load conversation history from agent_threads table."""
     result = (
         sb.table("agent_threads")
         .select("messages")
         .eq("id", thread_id)
+        .eq("user_id", user_id)
         .maybe_single()
         .execute()
     )

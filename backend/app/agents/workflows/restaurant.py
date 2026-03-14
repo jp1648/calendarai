@@ -341,6 +341,21 @@ async def book_restaurant(
 
     platform, token = booking_ref.split(":", 1)
 
+    # Validate platform and token from LLM output
+    if platform not in _ADAPTERS:
+        logger.warning(
+            "book_restaurant invalid platform=%r from booking_ref (known: %s)",
+            platform, list(_ADAPTERS.keys()),
+        )
+
+    if not token or not token.strip():
+        logger.warning("book_restaurant empty token in booking_ref")
+        return {"error": "Invalid booking_ref: token is empty."}
+
+    if len(token) > 500:
+        logger.warning("book_restaurant token too long len=%d", len(token))
+        return {"error": "Invalid booking_ref: token exceeds maximum length."}
+
     if platform not in _ADAPTERS:
         return {
             "error": f"No API adapter for '{platform}'. Use browser tools to book."

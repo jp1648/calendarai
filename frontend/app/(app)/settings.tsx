@@ -54,7 +54,7 @@ export default function SettingsScreen() {
     setPhone(profile.phone);
     setTimezone(profile.timezone);
     setDefaultLocation(profile.default_location);
-  }, [profile?.email]);
+  }, [profile]);
 
   const saveProfile = async () => {
     setSaving(true);

@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.config import get_settings
 from app.services.supabase import get_supabase_admin
 
 security = HTTPBearer()
@@ -19,8 +20,13 @@ _LIMITS = {
 
 _DAILY_TOKEN_BUDGET = 50_000
 
-# Users with no rate limits (for testing/admin)
-_UNLIMITED_EMAILS = {"test@calendarai.dev", "jaypat0885@gmail.com"}
+
+def _get_unlimited_emails() -> set[str]:
+    """Parse unlimited emails from settings (comma-separated env var)."""
+    raw = get_settings().unlimited_emails
+    if not raw:
+        return set()
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
 
 
 async def check_rate_limit(
@@ -32,7 +38,7 @@ async def check_rate_limit(
     """
     user = await get_current_user(credentials)
 
-    if user.email in _UNLIMITED_EMAILS:
+    if user.email and user.email.lower() in _get_unlimited_emails():
         return user
 
     sb = get_supabase_admin()

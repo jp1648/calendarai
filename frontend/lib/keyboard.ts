@@ -2,7 +2,9 @@ import { Keyboard, Platform } from "react-native";
 
 let keyboardVisible = false;
 
-if (Platform.OS !== "web") {
+let listenersRegistered = false;
+if (Platform.OS !== "web" && !listenersRegistered) {
+  listenersRegistered = true;
   Keyboard.addListener("keyboardDidShow", () => { keyboardVisible = true; });
   Keyboard.addListener("keyboardDidHide", () => { keyboardVisible = false; });
 }

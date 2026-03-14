@@ -60,11 +60,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inOnboardingGroup = segments[0] === "(onboarding)";
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (session && profileLoaded && !inOnboardingGroup) {
+    } else if (session && profileLoaded) {
       const profile = queryClient.getQueryData<{ full_name: string }>(["profile"]);
       if (!profile?.full_name) {
-        router.replace("/(onboarding)/welcome");
-      } else if (inAuthGroup) {
+        if (!inOnboardingGroup) router.replace("/(onboarding)/welcome");
+      } else if (inAuthGroup || inOnboardingGroup) {
         router.replace("/(app)");
       }
     }

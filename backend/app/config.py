@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     resy_api_key: str = ""
 
+    unlimited_emails: str = ""
+
     encryption_key: str = ""
 
     environment: str = "development"

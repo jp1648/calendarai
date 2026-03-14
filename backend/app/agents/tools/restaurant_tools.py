@@ -1,6 +1,8 @@
 """Restaurant discovery tools — web search and details for finding restaurants."""
 
+import ipaddress
 import logging
+from urllib.parse import urlparse
 
 from pydantic_ai import RunContext
 
@@ -9,6 +11,40 @@ from app.agents.core.registry import tool_registry
 from app.agents.tools.web_tools import web_search, web_extract
 
 logger = logging.getLogger("calendarai.tools.restaurant")
+
+
+def _validate_url(url: str) -> str:
+    """Validate that a URL is safe to fetch (no SSRF to internal hosts).
+
+    Returns the validated URL or raises ValueError.
+    """
+    parsed = urlparse(url)
+
+    # Only allow http and https schemes
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Blocked URL scheme: {parsed.scheme}")
+
+    hostname = parsed.hostname or ""
+    if not hostname:
+        raise ValueError("URL has no hostname")
+
+    # Block localhost and common internal hostnames
+    blocked_hosts = {"localhost", "metadata.google.internal"}
+    if hostname.lower() in blocked_hosts:
+        raise ValueError(f"Blocked internal hostname: {hostname}")
+
+    # Resolve and block private/reserved IP ranges
+    try:
+        addr = ipaddress.ip_address(hostname)
+        if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+            raise ValueError(f"Blocked private/reserved IP: {hostname}")
+    except ValueError as e:
+        if "Blocked" in str(e):
+            raise
+        # hostname is not an IP literal — that's fine, it's a domain name
+        pass
+
+    return url
 
 
 @tool_registry.register("search_restaurants", category="reservations")
@@ -77,6 +113,11 @@ async def get_restaurant_details(
         url: The restaurant's URL (from search results)
     """
     logger.info("get_restaurant_details url=%s", url[:80])
+    try:
+        url = _validate_url(url)
+    except ValueError as e:
+        logger.warning("get_restaurant_details blocked url=%s reason=%s", url[:80], e)
+        return {"error": f"Invalid URL: {e}"}
     pages = await web_extract(ctx, urls=[url])
 
     if not pages:

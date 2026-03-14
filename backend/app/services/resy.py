@@ -1,10 +1,13 @@
 """Resy API client for account linking and reservations."""
 
+import asyncio
 import re
 import logging
 import time
 
 import httpx
+
+from app.config import get_settings
 
 BASE_URL = "https://api.resy.com"
 
@@ -14,32 +17,45 @@ logger = logging.getLogger("calendarai.resy")
 _cached_api_key: str | None = None
 _cache_ts: float = 0
 _CACHE_TTL = 60 * 60 * 24  # 24 hours
+_api_key_lock = asyncio.Lock()
 
 
 async def _fetch_resy_api_key() -> str:
     """Scrape the public Resy API key from resy.com's JS bundle."""
     global _cached_api_key, _cache_ts
+
+    # If configured in settings, skip scraping entirely
+    configured_key = get_settings().resy_api_key
+    if configured_key:
+        return configured_key
+
+    # Double-checked locking to prevent concurrent scrapes
     if _cached_api_key and (time.time() - _cache_ts) < _CACHE_TTL:
         return _cached_api_key
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get("https://resy.com")
-        resp.raise_for_status()
-        match = re.search(r'src="((?:modules/)?app\.[a-f0-9]+\.js)"', resp.text)
-        if not match:
-            raise ValueError("Could not find Resy app bundle URL")
-        bundle_url = f"https://resy.com/{match.group(1)}"
+    async with _api_key_lock:
+        # Re-check after acquiring lock
+        if _cached_api_key and (time.time() - _cache_ts) < _CACHE_TTL:
+            return _cached_api_key
 
-        resp = await client.get(bundle_url)
-        resp.raise_for_status()
-        key_match = re.search(r'api[_-]?[Kk]ey\s*[:=]\s*["\']([A-Za-z0-9_-]{20,})["\']', resp.text)
-        if not key_match:
-            raise ValueError("Could not extract API key from Resy bundle")
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get("https://resy.com")
+            resp.raise_for_status()
+            match = re.search(r'src="((?:modules/)?app\.[a-f0-9]+\.js)"', resp.text)
+            if not match:
+                raise ValueError("Could not find Resy app bundle URL")
+            bundle_url = f"https://resy.com/{match.group(1)}"
 
-        _cached_api_key = key_match.group(1)
-        _cache_ts = time.time()
-        logger.info("Fetched Resy public API key")
-        return _cached_api_key
+            resp = await client.get(bundle_url)
+            resp.raise_for_status()
+            key_match = re.search(r'api[_-]?[Kk]ey\s*[:=]\s*["\']([A-Za-z0-9_-]{20,})["\']', resp.text)
+            if not key_match:
+                raise ValueError("Could not extract API key from Resy bundle")
+
+            _cached_api_key = key_match.group(1)
+            _cache_ts = time.time()
+            logger.info("Fetched Resy public API key")
+            return _cached_api_key
 
 
 class ResyClient:

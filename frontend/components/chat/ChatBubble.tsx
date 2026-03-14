@@ -4,7 +4,7 @@ import { formatTime } from "../../lib/dates";
 import { s, fontSize as fs } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
-const URL_REGEX = /(https?:\/\/[^\s,)]+)/g;
+const URL_TEST = /^https?:\/\/[^\s,)]+$/;
 
 function RichText({
   children,
@@ -18,10 +18,10 @@ function RichText({
   const boldParts = children.split(/\*\*(.*?)\*\*/g);
 
   const renderSegment = (text: string, bold: boolean, keyPrefix: string) => {
-    const urlParts = text.split(URL_REGEX);
+    const urlSplitRegex = /(https?:\/\/[^\s,)]+)/g;
+    const urlParts = text.split(urlSplitRegex);
     return urlParts.map((part, j) => {
-      if (URL_REGEX.test(part)) {
-        URL_REGEX.lastIndex = 0;
+      if (URL_TEST.test(part)) {
         return (
           <Text
             key={`${keyPrefix}-${j}`}

@@ -1,10 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.auth.rate_limit import check_rate_limit
 from app.agents.core import AgentRequest, AgentResponse, AgentRunner, RunStatus, agent_registry
 from app.agents.core.router import pick_scheduler
+
+
+class ScheduleRequest(BaseModel):
+    input: str = Field(max_length=2000)
+    thread_id: str | None = None
+    location: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 runner = AgentRunner()
@@ -32,11 +41,11 @@ async def run_agent(
 
 @router.post("/schedule", response_model=AgentResponse)
 async def schedule_event(
-    body: dict,
+    body: ScheduleRequest,
     user: AuthUser = Depends(check_rate_limit),
 ):
     """Convenience endpoint — auto-routes to Haiku (fast) or Sonnet (complex)."""
-    user_input = body.get("input", "")
+    user_input = body.input
     agent_name = pick_scheduler(user_input)
     request = AgentRequest(
         agent_name=agent_name,
@@ -52,15 +61,15 @@ async def schedule_event(
 
 @router.post("/schedule/stream")
 async def schedule_stream(
-    body: dict,
+    body: ScheduleRequest,
     user: AuthUser = Depends(check_rate_limit),
 ):
     """SSE streaming endpoint — auto-routes and streams text deltas, tool events, and results."""
-    user_input = body.get("input", "")
-    thread_id = body.get("thread_id")
-    location = body.get("location")
-    latitude = body.get("latitude")
-    longitude = body.get("longitude")
+    user_input = body.input
+    thread_id = body.thread_id
+    location = body.location
+    latitude = body.latitude
+    longitude = body.longitude
     agent_name = pick_scheduler(user_input)
 
     return StreamingResponse(

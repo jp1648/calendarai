@@ -91,7 +91,6 @@ function finalizeStreamingBubble() {
 }
 
 export function useAgentStream() {
-  const store = useChatStore();
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   const abortedRef = useRef(false);
 
@@ -102,10 +101,10 @@ export function useAgentStream() {
       xhrRef.current = null;
     }
     finalizeStreamingBubble();
-    store.setStreaming(false);
-    store.setThinking(false);
-    store.setStatusText("");
-  }, [store]);
+    useChatStore.getState().setStreaming(false);
+    useChatStore.getState().setThinking(false);
+    useChatStore.getState().setStatusText("");
+  }, []);
 
   const sendMessage = useCallback(
     async (
@@ -114,9 +113,9 @@ export function useAgentStream() {
     ): Promise<StreamResult | null> => {
       const threadId = useChatStore.getState().threadId;
       abortedRef.current = false;
-      store.setStreaming(true);
-      store.addUserMessage(input);
-      store.setThinking(true);
+      useChatStore.getState().setStreaming(true);
+      useChatStore.getState().addUserMessage(input);
+      useChatStore.getState().setThinking(true);
 
       let eventsCreated: any[] = [];
       let runId: string | null = null;
@@ -150,11 +149,11 @@ export function useAgentStream() {
           const handleEvent = (eventName: string, data: any) => {
             switch (eventName) {
               case "thread":
-                store.setThreadId(data.thread_id);
+                useChatStore.getState().setThreadId(data.thread_id);
                 break;
               case "text_delta":
-                store.setStatusText("");
-                store.appendAgentDelta(data.delta);
+                useChatStore.getState().setStatusText("");
+                useChatStore.getState().appendAgentDelta(data.delta);
                 break;
               case "tool_call": {
                 hadToolCalls = true;
@@ -169,8 +168,8 @@ export function useAgentStream() {
                     ],
                   });
                 }
-                store.setThinking(true);
-                store.setStatusText(
+                useChatStore.getState().setThinking(true);
+                useChatStore.getState().setStatusText(
                   TOOL_STATUS[data.tool] || data.tool.replace(/_/g, " ")
                 );
                 break;
@@ -181,7 +180,7 @@ export function useAgentStream() {
                 eventsCreated = data.events_created || [];
                 runId = data.run_id || null;
                 for (const ev of eventsCreated) {
-                  store.addEventCard({
+                  useChatStore.getState().addEventCard({
                     role: "event_card",
                     event: {
                       id: ev.id,
@@ -192,14 +191,14 @@ export function useAgentStream() {
                     },
                   });
                 }
-                store.setDone(eventsCreated);
+                useChatStore.getState().setDone(eventsCreated);
                 break;
               case "error":
                 finalizeStreamingBubble();
                 useChatStore.setState((state) => ({
                   messages: [...state.messages, { role: "error" as const, content: data.error || "Something went wrong" }],
                 }));
-                store.setStreaming(false);
+                useChatStore.getState().setStreaming(false);
                 resolve();
                 break;
             }
@@ -218,7 +217,7 @@ export function useAgentStream() {
               processSSEBuffer(buffer + "\n", currentEvent, handleEvent);
             }
             xhrRef.current = null;
-            store.setStreaming(false);
+            useChatStore.getState().setStreaming(false);
             resolve();
           };
 
@@ -234,7 +233,7 @@ export function useAgentStream() {
             useChatStore.setState((state) => ({
               messages: [...state.messages, { role: "error" as const, content: "Connection error" }],
             }));
-            store.setStreaming(false);
+            useChatStore.getState().setStreaming(false);
             resolve();
           };
 
@@ -243,7 +242,7 @@ export function useAgentStream() {
             useChatStore.setState((state) => ({
               messages: [...state.messages, { role: "error" as const, content: "Request timed out" }],
             }));
-            store.setStreaming(false);
+            useChatStore.getState().setStreaming(false);
             resolve();
           };
 
@@ -258,16 +257,16 @@ export function useAgentStream() {
         useChatStore.setState((state) => ({
           messages: [...state.messages, { role: "error" as const, content: e.message || "Connection error" }],
         }));
-        store.setStreaming(false);
+        useChatStore.getState().setStreaming(false);
         return null;
       }
     },
-    [store]
+    []
   );
 
   const reset = useCallback(() => {
-    store.reset();
-  }, [store]);
+    useChatStore.getState().reset();
+  }, []);
 
   return { sendMessage, reset, abort };
 }
