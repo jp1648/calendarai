@@ -10,6 +10,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useChatStore, type ChatMessage } from "../../stores/chatStore";
+import { useAgentStream } from "../../hooks/useAgentStream";
 import ChatBubble from "./ChatBubble";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, FONTS } from "../../lib/theme";
@@ -54,6 +55,18 @@ export default function ChatPanel() {
   const setOpen = useChatStore((s) => s.setOpen);
   const thinking = useChatStore((s) => s.thinking);
   const statusText = useChatStore((s) => s.statusText);
+  const { sendMessage } = useAgentStream();
+
+  const handleRetry = useCallback(() => {
+    const msgs = useChatStore.getState().messages;
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const msg = msgs[i];
+      if (msg.role === "user") {
+        sendMessage(msg.content);
+        return;
+      }
+    }
+  }, [sendMessage]);
   const sheetRef = useRef<BottomSheet>(null);
   const listRef = useRef<any>(null);
   const hasMessages = messages.length > 0;
@@ -135,7 +148,7 @@ export default function ChatPanel() {
         ref={listRef}
         data={messages}
         keyExtractor={(_: ChatMessage, i: number) => String(i)}
-        renderItem={({ item }: { item: ChatMessage }) => <ChatBubble message={item} />}
+        renderItem={({ item }: { item: ChatMessage }) => <ChatBubble message={item} onRetry={item.role === "error" ? handleRetry : undefined} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={

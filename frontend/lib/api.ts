@@ -2,6 +2,15 @@ import { supabase } from "./supabase";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, body: string) {
+    super(`API error ${status}: ${body}`);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
@@ -22,7 +31,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`API error ${res.status}: ${body}`);
+    if (res.status === 401) {
+      setTimeout(() => supabase.auth.signOut(), 0);
+    }
+    throw new ApiError(res.status, body);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

@@ -11,18 +11,21 @@ export interface ToastAction {
   onPress: () => void;
 }
 
+export type ToastVariant = "success" | "error";
+
 interface Props {
   message: string;
   action?: ToastAction;
+  variant?: ToastVariant;
   onDismiss: () => void;
 }
 
-export default function Toast({ message, action, onDismiss }: Props) {
+export default function Toast({ message, action, variant, onDismiss }: Props) {
   return (
     <Animated.View
       entering={SlideInDown.springify().damping(20).stiffness(200)}
       exiting={SlideOutDown.duration(200)}
-      style={styles.container}
+      style={[styles.container, variant === "error" && styles.containerError]}
     >
       <Text style={styles.message} numberOfLines={2}>
         {message}
@@ -77,5 +80,8 @@ const styles = StyleSheet.create({
     color: ACCENT,
     fontSize: fontSize(14),
     fontFamily: FONTS.bodyMedium,
+  },
+  containerError: {
+    backgroundColor: "#991B1B",
   },
 });

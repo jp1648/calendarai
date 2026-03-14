@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LogBox } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 
@@ -35,29 +35,52 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Prefetch profile as soon as user is authenticated
   useEffect(() => {
     if (session) {
-      queryClient.prefetchQuery({
-        queryKey: ["profile"],
-        queryFn: () => api.profile.get(),
-        staleTime: 1000 * 60 * 10,
-      });
+      queryClient
+        .fetchQuery({
+          queryKey: ["profile"],
+          queryFn: () => api.profile.get(),
+          staleTime: 1000 * 60 * 10,
+        })
+        .then(() => setProfileLoaded(true))
+        .catch(() => setProfileLoaded(true));
+    } else {
+      setProfileLoaded(false);
     }
   }, [session]);
 
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboardingGroup = segments[0] === "(onboarding)";
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (session && inAuthGroup) {
-      router.replace("/(app)");
+    } else if (session && (inAuthGroup || (!inOnboardingGroup && profileLoaded))) {
+      if (inAuthGroup) {
+        // Just logged in — check if onboarding needed
+        const profile = queryClient.getQueryData<{ full_name: string }>(["profile"]);
+        if (!profile?.full_name) {
+          router.replace("/(onboarding)/welcome");
+        } else {
+          router.replace("/(app)");
+        }
+      }
     }
-  }, [session, loading, segments]);
+  }, [session, loading, segments, profileLoaded]);
 
   if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: EARTHY.cream }}>
+        <ActivityIndicator size="large" color={EARTHY.bark} />
+      </View>
+    );
+  }
+
+  if (session && !profileLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: EARTHY.cream }}>
         <ActivityIndicator size="large" color={EARTHY.bark} />
@@ -105,6 +128,7 @@ export default function RootLayout() {
               <StatusBar style="dark" />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(onboarding)" />
                 <Stack.Screen name="(app)" />
               </Stack>
             </AuthGate>
