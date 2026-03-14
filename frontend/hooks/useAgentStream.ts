@@ -195,8 +195,12 @@ export function useAgentStream() {
                 store.setDone(eventsCreated);
                 break;
               case "error":
-                store.appendAgentDelta(data.error || "Something went wrong");
+                finalizeStreamingBubble();
+                useChatStore.setState((state) => ({
+                  messages: [...state.messages, { role: "error" as const, content: data.error || "Something went wrong" }],
+                }));
                 store.setStreaming(false);
+                resolve();
                 break;
             }
           };
@@ -226,15 +230,21 @@ export function useAgentStream() {
 
           xhr.onerror = () => {
             if (abortedRef.current) return; // Don't show error on intentional abort
-            store.appendAgentDelta("Connection error");
+            finalizeStreamingBubble();
+            useChatStore.setState((state) => ({
+              messages: [...state.messages, { role: "error" as const, content: "Connection error" }],
+            }));
             store.setStreaming(false);
-            reject(new Error("XHR failed"));
+            resolve();
           };
 
           xhr.ontimeout = () => {
-            store.appendAgentDelta("Request timed out");
+            finalizeStreamingBubble();
+            useChatStore.setState((state) => ({
+              messages: [...state.messages, { role: "error" as const, content: "Request timed out" }],
+            }));
             store.setStreaming(false);
-            reject(new Error("XHR timeout"));
+            resolve();
           };
 
           xhr.timeout = 120000; // 2 min timeout for long agent runs
@@ -244,10 +254,11 @@ export function useAgentStream() {
 
         return { eventsCreated, runId, hadToolCalls };
       } catch (e: any) {
-        if (!e.message?.includes("XHR")) {
-          store.appendAgentDelta(e.message || "Connection error");
-          store.setStreaming(false);
-        }
+        finalizeStreamingBubble();
+        useChatStore.setState((state) => ({
+          messages: [...state.messages, { role: "error" as const, content: e.message || "Connection error" }],
+        }));
+        store.setStreaming(false);
         return null;
       }
     },

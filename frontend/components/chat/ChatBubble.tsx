@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Linking } from "react-native";
+import { View, Text, StyleSheet, Linking, TouchableOpacity } from "react-native";
 import type { ChatMessage } from "../../stores/chatStore";
 import { formatTime } from "../../lib/dates";
 import { s, fontSize as fs } from "../../lib/responsive";
@@ -78,7 +78,7 @@ function EventCardBubble({
   );
 }
 
-export default function ChatBubble({ message }: { message: ChatMessage }) {
+export default function ChatBubble({ message, onRetry }: { message: ChatMessage; onRetry?: () => void }) {
   if (message.role === "user") {
     return (
       <View style={[styles.bubble, styles.userBubble]}>
@@ -100,6 +100,19 @@ export default function ChatBubble({ message }: { message: ChatMessage }) {
 
   if (message.role === "event_card") {
     return <EventCardBubble event={message.event} />;
+  }
+
+  if (message.role === "error") {
+    return (
+      <View style={[styles.bubble, styles.errorBubble]}>
+        <Text style={styles.errorText}>{message.content}</Text>
+        {onRetry && (
+          <TouchableOpacity onPress={onRetry} style={styles.retryButton} activeOpacity={0.7}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   }
 
   return null;
@@ -199,5 +212,27 @@ const styles = StyleSheet.create({
     color: EARTHY.stone,
     fontFamily: FONTS.bodyLight,
     marginTop: s(1),
+  },
+  errorBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  errorText: {
+    color: "#991B1B",
+    fontSize: fs(13),
+    lineHeight: fs(18),
+    fontFamily: FONTS.body,
+  },
+  retryButton: {
+    marginTop: s(6),
+    alignSelf: "flex-start",
+  },
+  retryText: {
+    color: "#991B1B",
+    fontSize: fs(13),
+    fontFamily: FONTS.bodyMedium,
+    textDecorationLine: "underline",
   },
 });

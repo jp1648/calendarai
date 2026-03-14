@@ -70,14 +70,16 @@ async function fetchLocationWeb(): Promise<LocationInfo> {
   return { latitude, longitude, displayName };
 }
 
-export function useLocation() {
-  const { data: location = null, error } = useQuery<LocationInfo>({
+export function useLocation(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
+  const { data: location = null, error, refetch } = useQuery<LocationInfo>({
     queryKey: ["location"],
     queryFn: Platform.OS === "web" ? fetchLocationWeb : fetchLocationNative,
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
     retry: 1,
+    enabled,
   });
 
-  return { location, error: error?.message ?? null };
+  return { location, error: error?.message ?? null, refetch };
 }

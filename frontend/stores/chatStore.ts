@@ -12,7 +12,8 @@ export type ChatMessage =
         end_time: string;
         location?: string;
       };
-    };
+    }
+  | { role: "error"; content: string };
 
 interface ChatStore {
   messages: ChatMessage[];

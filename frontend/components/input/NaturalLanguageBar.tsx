@@ -39,7 +39,10 @@ export default function NaturalLanguageBar({ onEventCreated }: Props) {
 
     const result = await sendMessage(text, location);
 
-    if (!result) return;
+    if (!result) {
+      showToast({ message: "Couldn't reach the server. Try again.", variant: "error" });
+      return;
+    }
 
     const { eventsCreated, hadToolCalls } = result;
 

@@ -28,7 +28,7 @@ export function useEventsQuery(filterDate: Date) {
   const queryClient = useQueryClient();
 
   // Single cached query for the full 6-month window
-  const { data: allEvents = [], isLoading: loading, refetch } = useQuery<CalendarEvent[]>({
+  const { data: allEvents = [], isLoading: loading, error, isError, refetch } = useQuery<CalendarEvent[]>({
     queryKey: ["events", PREFETCH_RANGE.start, PREFETCH_RANGE.end],
     queryFn: () => api.events.list(PREFETCH_RANGE.start, PREFETCH_RANGE.end),
     staleTime: 1000 * 60 * 10, // 10 minutes
@@ -67,5 +67,5 @@ export function useEventsQuery(filterDate: Date) {
     refetch();
   }, [refetch]);
 
-  return { events, loading, refresh };
+  return { events, loading, error, isError, refresh };
 }

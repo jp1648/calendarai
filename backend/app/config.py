@@ -21,6 +21,9 @@ class Settings(BaseSettings):
 
     encryption_key: str = ""
 
+    environment: str = "development"
+    cors_origins: str = ""
+
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""

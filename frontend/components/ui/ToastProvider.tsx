@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useRef, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
-import Toast, { ToastAction } from "./Toast";
+import Toast, { ToastAction, ToastVariant } from "./Toast";
 
 interface ToastOptions {
   message: string;
   action?: ToastAction;
+  variant?: ToastVariant;
   duration?: number;
 }
 
@@ -49,6 +50,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
         <Toast
           message={toast.message}
           action={toast.action}
+          variant={toast.variant}
           onDismiss={hideToast}
         />
       )}

@@ -18,6 +18,7 @@ import ChatPanel from "../../components/chat/ChatPanel";
 import NaturalLanguageBar from "../../components/input/NaturalLanguageBar";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
+import EmptyState from "../../components/ui/EmptyState";
 import { EARTHY, ACCENT, FONTS, CATEGORIES, categorizeEvent, CategoryKey } from "../../lib/theme";
 import { CalendarEvent } from "../../stores/eventStore";
 
@@ -52,7 +53,7 @@ export default function CalendarScreen() {
     const dates = getWeekDates(weekOffset);
     return dates[3]; // midweek date for fetching events
   }, [weekOffset]);
-  const { events, loading, refresh } = useEventsQuery(currentMonth);
+  const { events, loading, isError, refresh } = useEventsQuery(currentMonth);
   const router = useRouter();
 
   const onDayPress = useCallback(
@@ -177,6 +178,21 @@ export default function CalendarScreen() {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={EARTHY.stone} />
             </View>
+          ) : isError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorTitle}>Something went wrong</Text>
+              <Text style={styles.errorSubtitle}>Could not load your events.</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={refresh} activeOpacity={0.7}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : events.length === 0 ? (
+            <EmptyState
+              title="Your week is open"
+              subtitle="Ask AI to add events or tap + to create one"
+              actionLabel="New event"
+              onAction={() => router.push("/(app)/event/new")}
+            />
           ) : (
             <WeekView
               weekOffset={weekOffset}
@@ -244,6 +260,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: s(32),
+  },
+  errorTitle: {
+    fontSize: fontSize(18),
+    fontFamily: FONTS.heading,
+    color: EARTHY.bark,
+    marginBottom: s(6),
+    textAlign: "center",
+  },
+  errorSubtitle: {
+    fontSize: fontSize(14),
+    fontFamily: FONTS.bodyLight,
+    color: EARTHY.stone,
+    textAlign: "center",
+    marginBottom: s(20),
+  },
+  retryButton: {
+    backgroundColor: ACCENT,
+    borderRadius: s(12),
+    paddingVertical: s(10),
+    paddingHorizontal: s(24),
+  },
+  retryText: {
+    color: EARTHY.white,
+    fontSize: fontSize(14),
+    fontFamily: FONTS.bodyMedium,
   },
   headerTitle: {
     fontSize: fontSize(16),
