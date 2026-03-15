@@ -89,7 +89,6 @@ async def get_event_details(
 @tool_registry.register("import_event_to_calendar", category="events")
 async def import_event_to_calendar(
     ctx: RunContext[AgentDeps],
-    user_id: str,
     event_id: str,
 ) -> dict:
     """Import an Eventbrite event into the user's CalendarAI calendar.
@@ -98,10 +97,9 @@ async def import_event_to_calendar(
     and a link back to the Eventbrite page.
 
     Args:
-        user_id: The CalendarAI user ID
         event_id: The Eventbrite event ID to import
     """
-    logger.info("import_event_to_calendar user=%s event=%s", user_id, event_id)
+    logger.info("import_event_to_calendar user=%s event=%s", ctx.deps.user_id, event_id)
 
     client = EventbriteClient()
     try:
