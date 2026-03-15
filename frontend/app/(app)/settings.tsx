@@ -16,6 +16,7 @@ import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
 import { api } from "../../lib/api";
+import { openGoogleCalendarSubscribe } from "../../lib/calendar-sync";
 import * as Clipboard from "expo-clipboard";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
@@ -106,21 +107,16 @@ export default function SettingsScreen() {
     }
   };
 
-  const icalFeedUrl = `${process.env.EXPO_PUBLIC_API_URL}/api/ical/feed/${profile?.ical_feed_token}`;
+  const icalFeedUrl = profile?.ical_feed_token
+    ? `${process.env.EXPO_PUBLIC_API_URL}/api/ical/feed/${profile.ical_feed_token}`
+    : "";
 
   const subscribeGoogleCalendar = () => {
-    // Google Calendar subscribes to webcal:// URLs via its "Add by URL" flow
-    // This constructs a deep link that opens Google Calendar's subscription dialog
-    const webcalUrl = icalFeedUrl.replace(/^https?:\/\//, "webcal://");
-    const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
-    if (typeof window !== "undefined") {
-      window.open(googleCalUrl, "_blank");
-    } else {
-      Linking.openURL(googleCalUrl);
-    }
+    openGoogleCalendarSubscribe(icalFeedUrl);
   };
 
   const copyIcalUrl = async () => {
+    if (!icalFeedUrl) return;
     if (Clipboard.setStringAsync) {
       await Clipboard.setStringAsync(icalFeedUrl);
     }

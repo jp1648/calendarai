@@ -7,9 +7,10 @@ Runs as a background task on a configurable interval (default: 5 minutes).
 
 import asyncio
 import logging
-from datetime import datetime, timezone
 
-from app.agents.core import AgentRequest, AgentRunner
+from googleapiclient.discovery import build
+
+from app.agents.core import AgentRequest
 from app.agents.core.schemas import TriggerMode
 from app.config import get_settings
 from app.services.encryption import decrypt
@@ -18,28 +19,74 @@ from app.services.supabase import get_supabase_admin
 
 logger = logging.getLogger(__name__)
 
-runner = AgentRunner()
+_runner = None
 _poll_task: asyncio.Task | None = None
+
+
+def _get_runner():
+    """Lazy-initialize AgentRunner to avoid heavy imports at module load."""
+    global _runner
+    if _runner is None:
+        from app.agents.core import AgentRunner
+        _runner = AgentRunner()
+    return _runner
+
+
+def _check_processed(sb, user_id: str, msg_id: str) -> bool:
+    """Check if a message has already been processed (sync, runs in thread)."""
+    existing = (
+        sb.table("processed_items")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("item_type", "gmail")
+        .eq("item_id", msg_id)
+        .execute()
+    )
+    return bool(existing.data)
+
+
+def _mark_processed(sb, user_id: str, msg_id: str, result: str):
+    """Mark a message as processed (sync, runs in thread)."""
+    sb.table("processed_items").insert(
+        {
+            "user_id": user_id,
+            "item_type": "gmail",
+            "item_id": msg_id,
+            "agent": "email_parser",
+            "result": result,
+        }
+    ).execute()
+
+
+def _fetch_gmail_connected_users(sb):
+    """Fetch all users with connected Gmail accounts (sync, runs in thread)."""
+    return (
+        sb.table("profiles")
+        .select("id, email, gmail_refresh_token")
+        .eq("gmail_connected", True)
+        .not_.is_("gmail_refresh_token", "null")
+        .execute()
+    )
+
+
+def _list_recent_messages(service):
+    """List recent inbox messages from Gmail API (sync, runs in thread)."""
+    return (
+        service.users()
+        .messages()
+        .list(userId="me", labelIds=["INBOX"], maxResults=10, q="newer_than:1d")
+        .execute()
+    )
 
 
 async def poll_gmail_for_user(user_id: str, email: str, refresh_token: str):
     """Check one user's Gmail for new messages and process them."""
     sb = get_supabase_admin()
     creds = get_gmail_credentials(refresh_token)
+    service = build("gmail", "v1", credentials=creds, cache_discovery=True)
 
-    # Get the last processed message timestamp, or default to recent messages
-    from googleapiclient.discovery import build
-
-    service = build("gmail", "v1", credentials=creds)
-
-    # Search for recent unprocessed messages (last 24 hours, inbox only)
     try:
-        results = (
-            service.users()
-            .messages()
-            .list(userId="me", labelIds=["INBOX"], maxResults=10, q="newer_than:1d")
-            .execute()
-        )
+        results = await asyncio.to_thread(_list_recent_messages, service)
     except Exception as e:
         logger.warning(f"Gmail API error for {email}: {e}")
         return
@@ -48,20 +95,14 @@ async def poll_gmail_for_user(user_id: str, email: str, refresh_token: str):
     if not messages:
         return
 
+    runner = _get_runner()
     processed_count = 0
     for msg in messages:
         msg_id = msg["id"]
 
         # Dedup — skip already-processed messages
-        existing = (
-            sb.table("processed_items")
-            .select("id")
-            .eq("user_id", user_id)
-            .eq("item_type", "gmail")
-            .eq("item_id", msg_id)
-            .execute()
-        )
-        if existing.data:
+        already_done = await asyncio.to_thread(_check_processed, sb, user_id, msg_id)
+        if already_done:
             continue
 
         # Run email parser agent
@@ -78,29 +119,14 @@ async def poll_gmail_for_user(user_id: str, email: str, refresh_token: str):
                 gmail_credentials=creds,
             )
 
-            # Mark as processed
-            sb.table("processed_items").insert(
-                {
-                    "user_id": user_id,
-                    "item_type": "gmail",
-                    "item_id": msg_id,
-                    "agent": "email_parser",
-                    "result": response.message[:500] if response.message else "processed",
-                }
-            ).execute()
+            result_text = response.message[:500] if response.message else "processed"
+            await asyncio.to_thread(_mark_processed, sb, user_id, msg_id, result_text)
             processed_count += 1
         except Exception as e:
             logger.error(f"Email parser failed for msg {msg_id}: {e}")
-            # Mark as processed to avoid retrying broken messages
-            sb.table("processed_items").insert(
-                {
-                    "user_id": user_id,
-                    "item_type": "gmail",
-                    "item_id": msg_id,
-                    "agent": "email_parser",
-                    "result": f"error: {str(e)[:200]}",
-                }
-            ).execute()
+            await asyncio.to_thread(
+                _mark_processed, sb, user_id, msg_id, f"error: {str(e)[:200]}"
+            )
 
     if processed_count > 0:
         logger.info(f"Processed {processed_count} new emails for {email}")
@@ -111,13 +137,7 @@ async def poll_all_users():
     sb = get_supabase_admin()
 
     try:
-        result = (
-            sb.table("profiles")
-            .select("id, email, gmail_refresh_token")
-            .eq("gmail_connected", True)
-            .not_.is_("gmail_refresh_token", "null")
-            .execute()
-        )
+        result = await asyncio.to_thread(_fetch_gmail_connected_users, sb)
     except Exception as e:
         logger.error(f"Failed to fetch Gmail-connected users: {e}")
         return
@@ -132,6 +152,8 @@ async def poll_all_users():
             )
         except Exception as e:
             logger.warning(f"Gmail poll failed for user {profile['email']}: {e}")
+        # Brief pause between users to avoid Gmail API rate limits
+        await asyncio.sleep(1)
 
 
 async def _poll_loop():

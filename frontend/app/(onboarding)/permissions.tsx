@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +12,7 @@ import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import { useLocation } from "../../hooks/useLocation";
 import { api } from "../../lib/api";
+import { openGoogleCalendarSubscribe } from "../../lib/calendar-sync";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
@@ -28,13 +28,7 @@ export default function PermissionsScreen() {
   const handleCalendarSync = useCallback(() => {
     if (!profile?.ical_feed_token) return;
     const feedUrl = `${process.env.EXPO_PUBLIC_API_URL}/api/ical/feed/${profile.ical_feed_token}`;
-    const webcalUrl = feedUrl.replace(/^https?:\/\//, "webcal://");
-    const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
-    if (typeof window !== "undefined") {
-      window.open(googleCalUrl, "_blank");
-    } else {
-      Linking.openURL(googleCalUrl);
-    }
+    openGoogleCalendarSubscribe(feedUrl);
     setCalendarSynced(true);
   }, [profile?.ical_feed_token]);
 
