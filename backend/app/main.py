@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,8 +10,19 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.routers import events, agents, gmail, ical, sharing, profile, resy
 from app.services.supabase import get_supabase_client
+from app.services.email_poller import start_poller, stop_poller
 
-app = FastAPI(title="CalendarAI", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    start_poller()
+    yield
+    # Shutdown
+    stop_poller()
+
+
+app = FastAPI(title="CalendarAI", version="0.1.0", lifespan=lifespan)
 
 settings = get_settings()
 

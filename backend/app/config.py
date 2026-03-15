@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     google_redirect_uri: str = ""
     google_pubsub_topic: str = ""
 
+    gmail_poll_enabled: bool = True
+    gmail_poll_interval_seconds: int = 300  # 5 minutes
+
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:8081"
 

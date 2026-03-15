@@ -106,10 +106,23 @@ export default function SettingsScreen() {
     }
   };
 
+  const icalFeedUrl = `${process.env.EXPO_PUBLIC_API_URL}/api/ical/feed/${profile?.ical_feed_token}`;
+
+  const subscribeGoogleCalendar = () => {
+    // Google Calendar subscribes to webcal:// URLs via its "Add by URL" flow
+    // This constructs a deep link that opens Google Calendar's subscription dialog
+    const webcalUrl = icalFeedUrl.replace(/^https?:\/\//, "webcal://");
+    const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+    if (typeof window !== "undefined") {
+      window.open(googleCalUrl, "_blank");
+    } else {
+      Linking.openURL(googleCalUrl);
+    }
+  };
+
   const copyIcalUrl = async () => {
-    const url = `${process.env.EXPO_PUBLIC_API_URL}/api/ical/feed/${profile?.ical_feed_token}`;
     if (Clipboard.setStringAsync) {
-      await Clipboard.setStringAsync(url);
+      await Clipboard.setStringAsync(icalFeedUrl);
     }
     Alert.alert("Copied!", "iCal feed URL copied to clipboard");
   };
@@ -223,13 +236,16 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      <Text style={styles.sectionTitle}>iCal Feed</Text>
+      <Text style={styles.sectionTitle}>Calendar Sync</Text>
       <View style={styles.card}>
         <Text style={styles.helpTextInCard}>
-          Add this URL to Google Calendar to sync your events.
+          Subscribe to your CalendarAI events in Google Calendar. Events the AI creates will show up automatically.
         </Text>
-        <TouchableOpacity style={styles.outlineButton} onPress={copyIcalUrl}>
-          <Text style={styles.outlineButtonText}>Copy Feed URL</Text>
+        <TouchableOpacity style={styles.actionButton} onPress={subscribeGoogleCalendar}>
+          <Text style={styles.actionButtonText}>Add to Google Calendar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.outlineButton, { marginTop: s(10) }]} onPress={copyIcalUrl}>
+          <Text style={styles.outlineButtonText}>Copy iCal URL</Text>
         </TouchableOpacity>
       </View>
 

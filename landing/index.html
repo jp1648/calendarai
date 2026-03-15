@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CalendarAI — Your calendar, managed by AI</title>
+  <meta name="description" content="AI-powered calendar that books restaurants, parses emails, and manages your schedule. Just tell it what you need." />
+  <meta name="theme-color" content="#F5F0EA" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Fraunces:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cream: #F5F0EA;
+      --sand: #E8DFD4;
+      --bark: #3B2F26;
+      --bark-soft: #5C4D40;
+      --stone: #8A7D70;
+      --stone-light: #B5AA9E;
+      --white: #FDFBF9;
+      --accent: #C0785A;
+      --accent-hover: #A8654A;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--cream);
+      color: var(--bark);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      font-size: 18px;
+      color: var(--bark);
+      letter-spacing: 0.5px;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .nav-cta {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--white);
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .nav-cta:hover { background: var(--accent-hover); }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: clamp(36px, 6vw, 52px);
+      color: var(--bark);
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--bark-soft);
+      font-weight: 300;
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--white);
+      background: var(--accent);
+      border-radius: 14px;
+      padding: 16px 40px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .hero-cta:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .hero-sub {
+      font-size: 13px;
+      color: var(--stone);
+      margin-top: 14px;
+    }
+
+    /* ── Demo prompt ── */
+    .demo {
+      max-width: 520px;
+      margin: 0 auto 80px;
+      padding: 0 24px;
+    }
+
+    .demo-bar {
+      background: var(--white);
+      border: 1px solid var(--sand);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 24px rgba(59, 47, 38, 0.06);
+    }
+
+    .demo-bar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .demo-bar p {
+      font-size: 15px;
+      color: var(--bark-soft);
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    /* ── Features ── */
+    .features {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--sand);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feature-icon.booking { background: rgba(232, 168, 124, 0.14); }
+    .feature-icon.email { background: rgba(134, 195, 185, 0.14); }
+    .feature-icon.sync { background: rgba(154, 180, 214, 0.14); }
+
+    .feature-card h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: 18px;
+      color: var(--bark);
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--bark-soft);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* ── How it works ── */
+    .how-it-works {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      text-align: center;
+    }
+
+    .how-it-works h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: 28px;
+      color: var(--bark);
+      margin-bottom: 40px;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      text-align: left;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--white);
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--bark);
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: var(--stone);
+      font-weight: 300;
+    }
+
+    /* ── CTA section ── */
+    .cta-section {
+      text-align: center;
+      padding: 60px 24px 80px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: 28px;
+      color: var(--bark);
+      margin-bottom: 12px;
+    }
+
+    .cta-section p {
+      font-size: 15px;
+      color: var(--stone);
+      font-weight: 300;
+      margin-bottom: 28px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--sand);
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--stone-light);
+      font-weight: 300;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .hero { padding: 48px 20px 40px; }
+      .features { grid-template-columns: 1fr; }
+      nav { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="logo">calendar<span>ai</span></a>
+    <a href="/signup" class="nav-cta">Get started</a>
+  </nav>
+
+  <section class="hero">
+    <h1>Your calendar, managed by AI</h1>
+    <p>
+      Tell it what you need. It books restaurants, parses your email for events,
+      and keeps your week organized — so you don't have to.
+    </p>
+    <a href="/signup" class="hero-cta">Get started free</a>
+    <p class="hero-sub">No credit card required</p>
+  </section>
+
+  <div class="demo">
+    <div class="demo-bar">
+      <div class="dot"></div>
+      <p>"Book me dinner at Carbone Friday at 8pm for 2"</p>
+    </div>
+  </div>
+
+  <section class="features">
+    <div class="feature-card">
+      <div class="feature-icon booking">&#127869;</div>
+      <h3>Book anything by asking</h3>
+      <p>
+        Restaurants on Resy, haircuts, doctor appointments — tell the AI what you
+        need and it handles the booking end-to-end.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon email">&#9993;</div>
+      <h3>Email events auto-appear</h3>
+      <p>
+        Connect Gmail and flight confirmations, dinner reservations, and meeting
+        invites land on your calendar automatically.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon sync">&#128197;</div>
+      <h3>Syncs with Google Calendar</h3>
+      <p>
+        One-tap iCal feed export. Everything the AI adds shows up in your
+        existing Google Calendar — no app switching.
+      </p>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h4>Sign up and connect your accounts</h4>
+          <p>Link Resy for restaurant bookings and Gmail for automatic event parsing. Takes 30 seconds.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h4>Tell the AI what you need</h4>
+          <p>Type naturally — "lunch with Sarah tomorrow at noon" or "find me a table at Lilia next Saturday."</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h4>Your calendar stays current</h4>
+          <p>Events from emails appear automatically. Bookings land on your calendar with all the details. Subscribe via iCal to see everything in Google Calendar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Ready to stop managing your calendar?</h2>
+    <p>Join the waitlist and be one of the first to try CalendarAI.</p>
+    <a href="/signup" class="hero-cta">Get started free</a>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 CalendarAI</p>
+  </footer>
+</body>
+</html>

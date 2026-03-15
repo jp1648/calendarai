@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,18 @@ import ScreenHeader from "../../components/ui/ScreenHeader";
 import { api } from "../../lib/api";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
+import { getDeviceTimezone } from "../../lib/timezone";
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [detectedTimezone, setDetectedTimezone] = useState("");
+
+  useEffect(() => {
+    setDetectedTimezone(getDeviceTimezone());
+  }, []);
 
   const handleContinue = async () => {
     const trimmed = name.trim();
@@ -26,7 +32,10 @@ export default function WelcomeScreen() {
     setSaving(true);
     setError("");
     try {
-      await api.profile.update({ full_name: trimmed });
+      await api.profile.update({
+        full_name: trimmed,
+        timezone: detectedTimezone || undefined,
+      });
       router.push("/(onboarding)/connect");
     } catch (e: any) {
       setError(e.message || "Could not save your name.");
@@ -55,6 +64,13 @@ export default function WelcomeScreen() {
           returnKeyType="done"
           onSubmitEditing={handleContinue}
         />
+
+        {detectedTimezone ? (
+          <View style={styles.timezoneRow}>
+            <Text style={styles.timezoneLabel}>Timezone detected:</Text>
+            <Text style={styles.timezoneValue}>{detectedTimezone}</Text>
+          </View>
+        ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -114,6 +130,22 @@ const styles = StyleSheet.create({
     backgroundColor: EARTHY.white,
     color: EARTHY.bark,
     fontFamily: FONTS.body,
+  },
+  timezoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: s(6),
+    marginTop: s(16),
+  },
+  timezoneLabel: {
+    fontSize: fontSize(13),
+    fontFamily: FONTS.bodyLight,
+    color: EARTHY.stone,
+  },
+  timezoneValue: {
+    fontSize: fontSize(13),
+    fontFamily: FONTS.bodyMedium,
+    color: EARTHY.barkSoft,
   },
   error: {
     color: "#991B1B",

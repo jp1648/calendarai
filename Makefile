@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend install test test-backend test-frontend
+.PHONY: dev dev-backend dev-frontend dev-landing install test test-backend test-frontend
 
 dev-backend:
 	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -12,6 +12,9 @@ dev:
 install:
 	cd backend && uv sync
 	cd frontend && npm install
+
+dev-landing:
+	cd landing && python3 -m http.server 3000
 
 test: test-backend test-frontend
 
