@@ -95,6 +95,18 @@ export const api = {
       }),
     unlink: () => request<{ status: string }>("/api/resy/unlink", { method: "POST" }),
   },
+  calendly: {
+    getAuthUrl: () => request<{ url: string }>("/api/calendly/auth-url"),
+    unlink: () => request<{ status: string }>("/api/calendly/unlink", { method: "POST" }),
+    eventTypes: () => request<{ event_types: any[] }>("/api/calendly/event-types"),
+    events: (minStartTime?: string, maxStartTime?: string) => {
+      const params = new URLSearchParams();
+      if (minStartTime) params.set("min_start_time", minStartTime);
+      if (maxStartTime) params.set("max_start_time", maxStartTime);
+      const qs = params.toString();
+      return request<{ events: any[] }>(`/api/calendly/events${qs ? `?${qs}` : ""}`);
+    },
+  },
   profile: {
     get: () =>
       request<{
