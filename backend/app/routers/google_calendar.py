@@ -1,5 +1,6 @@
 """Google Calendar 2-way sync router."""
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -47,15 +48,6 @@ def _get_user_tz(user_id: str) -> str:
     return (result.data or {}).get("timezone", "America/New_York")
 
 
-def _ensure_tz(dt: datetime, user_tz: str) -> str:
-    tz = ZoneInfo(user_tz)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=tz)
-    elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
-        dt = dt.replace(tzinfo=tz)
-    return dt.isoformat()
-
-
 def _calendarai_event_to_gcal(event: dict) -> dict:
     """Convert a CalendarAI event row into a Google Calendar event body."""
     body: dict = {
@@ -64,7 +56,6 @@ def _calendarai_event_to_gcal(event: dict) -> dict:
         "location": event.get("location", ""),
     }
     if event.get("all_day"):
-        # all-day uses 'date' instead of 'dateTime'
         body["start"] = {"date": event["start_time"][:10]}
         body["end"] = {"date": event["end_time"][:10]}
     else:
@@ -117,7 +108,7 @@ def _gcal_event_to_row(gcal_event: dict, user_id: str) -> dict | None:
 async def list_calendars_endpoint(user: AuthUser = Depends(get_current_user)):
     """List all Google Calendars for the authenticated user."""
     creds = _get_credentials(user.id)
-    calendars = gc_list_calendars(creds)
+    calendars = await asyncio.to_thread(gc_list_calendars, creds)
     return [
         {
             "id": c["id"],
@@ -138,7 +129,9 @@ async def list_events_endpoint(
 ):
     """Fetch events from a Google Calendar."""
     creds = _get_credentials(user.id)
-    events = gc_list_events(creds, calendar_id=calendar_id, time_min=start, time_max=end)
+    events = await asyncio.to_thread(
+        gc_list_events, creds, calendar_id=calendar_id, time_min=start, time_max=end
+    )
     return events
 
 
@@ -156,6 +149,7 @@ async def sync_from_google(
     """Pull Google Calendar events into the CalendarAI events table.
 
     Uses source_ref (Google event ID) for upsert deduplication.
+    Batch-fetches existing refs to avoid N+1 queries.
     """
     creds = _get_credentials(user.id)
     tz_name = _get_user_tz(user.id)
@@ -165,7 +159,8 @@ async def sync_from_google(
     time_min = (now - timedelta(days=body.days_back)).isoformat()
     time_max = (now + timedelta(days=body.days_forward)).isoformat()
 
-    gcal_events = gc_list_events(
+    gcal_events = await asyncio.to_thread(
+        gc_list_events,
         creds,
         calendar_id=body.calendar_id,
         time_min=time_min,
@@ -173,6 +168,17 @@ async def sync_from_google(
     )
 
     sb = get_supabase_admin()
+
+    # Batch-fetch all existing source_refs to avoid N+1 queries
+    existing_result = (
+        sb.table("events")
+        .select("id, source_ref")
+        .eq("user_id", user.id)
+        .eq("source", "google_calendar")
+        .execute()
+    )
+    ref_map = {row["source_ref"]: row["id"] for row in existing_result.data or []}
+
     created = 0
     updated = 0
     skipped = 0
@@ -183,20 +189,10 @@ async def sync_from_google(
             skipped += 1
             continue
 
-        # Check if we already have this event
-        existing = (
-            sb.table("events")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("source", "google_calendar")
-            .eq("source_ref", ge["id"])
-            .execute()
-        )
-
-        if existing.data:
-            # Update existing
+        existing_id = ref_map.get(ge["id"])
+        if existing_id:
             update_data = {k: v for k, v in row.items() if k not in ("user_id", "source", "source_ref", "confidence")}
-            sb.table("events").update(update_data).eq("id", existing.data[0]["id"]).execute()
+            sb.table("events").update(update_data).eq("id", existing_id).execute()
             updated += 1
         else:
             sb.table("events").insert(row).execute()
@@ -230,10 +226,11 @@ async def push_event_to_google(
 
     # If the event already has a Google Calendar source_ref and came from gcal, update it
     if event.data.get("source") == "google_calendar" and event.data.get("source_ref"):
-        gcal_event = gc_update_event(creds, calendar_id, event.data["source_ref"], gcal_body)
+        gcal_event = await asyncio.to_thread(
+            gc_update_event, creds, calendar_id, event.data["source_ref"], gcal_body
+        )
     else:
-        gcal_event = gc_create_event(creds, calendar_id, gcal_body)
-        # Store the gcal event id back
+        gcal_event = await asyncio.to_thread(gc_create_event, creds, calendar_id, gcal_body)
         sb.table("events").update({
             "source_ref": gcal_event["id"],
             "metadata": {
@@ -251,7 +248,7 @@ async def push_all_events(
     calendar_id: str = Query("primary"),
     user: AuthUser = Depends(get_current_user),
 ):
-    """Push all CalendarAI events (that aren't already from Google Calendar) to Google Calendar."""
+    """Push all CalendarAI events (that aren't already pushed or from Google Calendar) to Google Calendar."""
     creds = _get_credentials(user.id)
     sb = get_supabase_admin()
 
@@ -273,13 +270,13 @@ async def push_all_events(
     skipped = 0
 
     for event in events.data or []:
-        # Skip events that already came from Google Calendar (avoid duplicates)
-        if event.get("source") == "google_calendar" and event.get("source_ref"):
+        # Skip events that already have a source_ref (already pushed or from external source)
+        if event.get("source_ref"):
             skipped += 1
             continue
 
         gcal_body = _calendarai_event_to_gcal(event)
-        gcal_event = gc_create_event(creds, calendar_id, gcal_body)
+        gcal_event = await asyncio.to_thread(gc_create_event, creds, calendar_id, gcal_body)
 
         sb.table("events").update({
             "source_ref": gcal_event["id"],
