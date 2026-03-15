@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     google_redirect_uri: str = ""
     google_pubsub_topic: str = ""
 
+    calendly_client_id: str = ""
+    calendly_client_secret: str = ""
+    calendly_redirect_uri: str = ""
+
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:8081"
 

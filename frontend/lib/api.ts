@@ -98,8 +98,88 @@ export const api = {
   square: {
     getAuthUrl: () => request<{ url: string }>("/api/square/auth-url"),
     unlink: () => request<{ status: string }>("/api/square/unlink", { method: "POST" }),
-    locations: () =>
-      request<{ locations: any[] }>("/api/square/locations"),
+    locations: () => request<{ locations: any[] }>("/api/square/locations"),
+  },
+  calendly: {
+    getAuthUrl: () => request<{ url: string }>("/api/calendly/auth-url"),
+    unlink: () => request<{ status: string }>("/api/calendly/unlink", { method: "POST" }),
+    eventTypes: () => request<{ event_types: any[] }>("/api/calendly/event-types"),
+    events: (minStartTime?: string, maxStartTime?: string) => {
+      const params = new URLSearchParams();
+      if (minStartTime) params.set("min_start_time", minStartTime);
+      if (maxStartTime) params.set("max_start_time", maxStartTime);
+      const qs = params.toString();
+      return request<{ events: any[] }>(`/api/calendly/events${qs ? `?${qs}` : ""}`);
+    },
+  },
+  googleCalendar: {
+    calendars: () =>
+      request<{ id: string; summary: string; primary: boolean; backgroundColor: string }[]>(
+        "/api/google-calendar/calendars"
+      ),
+    events: (calendarId?: string, start?: string, end?: string) => {
+      const params = new URLSearchParams();
+      if (calendarId) params.set("calendar_id", calendarId);
+      if (start) params.set("start", start);
+      if (end) params.set("end", end);
+      const qs = params.toString();
+      return request<any[]>(`/api/google-calendar/events${qs ? `?${qs}` : ""}`);
+    },
+    sync: (calendarId?: string, daysBack?: number, daysForward?: number) =>
+      request<{ created: number; updated: number; skipped: number }>(
+        "/api/google-calendar/sync",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            calendar_id: calendarId || "primary",
+            days_back: daysBack ?? 30,
+            days_forward: daysForward ?? 90,
+          }),
+        }
+      ),
+    pushEvent: (eventId: string, calendarId?: string) => {
+      const params = new URLSearchParams();
+      if (calendarId) params.set("calendar_id", calendarId);
+      const qs = params.toString();
+      return request<{ status: string; gcal_event_id: string }>(
+        `/api/google-calendar/push/${eventId}${qs ? `?${qs}` : ""}`,
+        { method: "POST" }
+      );
+    },
+    pushAll: (calendarId?: string) => {
+      const params = new URLSearchParams();
+      if (calendarId) params.set("calendar_id", calendarId);
+      const qs = params.toString();
+      return request<{ pushed: number; skipped: number }>(
+        `/api/google-calendar/push-all${qs ? `?${qs}` : ""}`,
+        { method: "POST" }
+      );
+    },
+  },
+  eventbrite: {
+    search: (params: {
+      query?: string;
+      lat?: number;
+      lng?: number;
+      radius?: string;
+      start_date?: string;
+      end_date?: string;
+    }) => {
+      const qs = new URLSearchParams();
+      if (params.query) qs.set("query", params.query);
+      if (params.lat != null) qs.set("lat", String(params.lat));
+      if (params.lng != null) qs.set("lng", String(params.lng));
+      if (params.radius) qs.set("radius", params.radius);
+      if (params.start_date) qs.set("start_date", params.start_date);
+      if (params.end_date) qs.set("end_date", params.end_date);
+      const q = qs.toString();
+      return request<any>(`/api/eventbrite/search${q ? `?${q}` : ""}`);
+    },
+    eventDetails: (eventId: string) => request<any>(`/api/eventbrite/events/${eventId}`),
+    importEvent: (eventId: string) =>
+      request<any>(`/api/eventbrite/import/${eventId}`, { method: "POST" }),
+    getAuthUrl: () => request<{ url: string }>("/api/eventbrite/auth-url"),
+    unlink: () => request<{ status: string }>("/api/eventbrite/unlink", { method: "POST" }),
   },
   profile: {
     get: () =>
@@ -111,6 +191,9 @@ export const api = {
         email: string;
         gmail_connected: boolean;
         resy_connected: boolean;
+        square_connected: boolean;
+        calendly_connected: boolean;
+        eventbrite_connected: boolean;
         ical_feed_token: string;
       }>("/api/profile"),
     update: (data: {
