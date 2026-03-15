@@ -87,6 +87,34 @@ export const api = {
   gmail: {
     getAuthUrl: () => request<{ url: string }>("/api/gmail/auth-url"),
   },
+  eventbrite: {
+    search: (params: {
+      query?: string;
+      lat?: number;
+      lng?: number;
+      radius?: string;
+      start_date?: string;
+      end_date?: string;
+    }) => {
+      const qs = new URLSearchParams();
+      if (params.query) qs.set("query", params.query);
+      if (params.lat != null) qs.set("lat", String(params.lat));
+      if (params.lng != null) qs.set("lng", String(params.lng));
+      if (params.radius) qs.set("radius", params.radius);
+      if (params.start_date) qs.set("start_date", params.start_date);
+      if (params.end_date) qs.set("end_date", params.end_date);
+      const q = qs.toString();
+      return request<any>(`/api/eventbrite/search${q ? `?${q}` : ""}`);
+    },
+    eventDetails: (eventId: string) =>
+      request<any>(`/api/eventbrite/events/${eventId}`),
+    importEvent: (eventId: string) =>
+      request<any>(`/api/eventbrite/import/${eventId}`, { method: "POST" }),
+    getAuthUrl: () =>
+      request<{ url: string }>("/api/eventbrite/auth-url"),
+    unlink: () =>
+      request<{ status: string }>("/api/eventbrite/unlink", { method: "POST" }),
+  },
   resy: {
     connect: (email: string, password: string) =>
       request<{ status: string }>("/api/resy/connect", {

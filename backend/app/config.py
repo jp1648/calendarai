@@ -19,6 +19,11 @@ class Settings(BaseSettings):
 
     resy_api_key: str = ""
 
+    eventbrite_api_key: str = ""
+    eventbrite_client_id: str = ""
+    eventbrite_client_secret: str = ""
+    eventbrite_redirect_uri: str = ""
+
     unlimited_emails: str = ""
 
     encryption_key: str = ""
