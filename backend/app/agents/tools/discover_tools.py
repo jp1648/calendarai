@@ -34,6 +34,11 @@ tool_registry.define_category(
     "(Resy, OpenTable, etc.) automatically.",
 )
 tool_registry.define_category(
+    "events",
+    "Search for events, concerts, meetups, and festivals on Eventbrite. "
+    "Can also import events to the calendar. Read-only — cannot purchase tickets.",
+)
+tool_registry.define_category(
     "fitness",
     "Search fitness studios and book classes via Mindbody.",
 )

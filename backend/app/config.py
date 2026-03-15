@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     square_app_secret: str = ""
     square_environment: str = "sandbox"
 
+    eventbrite_api_key: str = ""
+    eventbrite_client_id: str = ""
+    eventbrite_client_secret: str = ""
+    eventbrite_redirect_uri: str = ""
+
     unlimited_emails: str = ""
 
     encryption_key: str = ""
