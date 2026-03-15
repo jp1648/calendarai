@@ -19,6 +19,10 @@ class Settings(BaseSettings):
 
     resy_api_key: str = ""
 
+    square_app_id: str = ""
+    square_app_secret: str = ""
+    square_environment: str = "sandbox"
+
     unlimited_emails: str = ""
 
     encryption_key: str = ""

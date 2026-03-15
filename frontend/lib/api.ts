@@ -95,6 +95,12 @@ export const api = {
       }),
     unlink: () => request<{ status: string }>("/api/resy/unlink", { method: "POST" }),
   },
+  square: {
+    getAuthUrl: () => request<{ url: string }>("/api/square/auth-url"),
+    unlink: () => request<{ status: string }>("/api/square/unlink", { method: "POST" }),
+    locations: () =>
+      request<{ locations: any[] }>("/api/square/locations"),
+  },
   profile: {
     get: () =>
       request<{
