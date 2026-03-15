@@ -156,50 +156,6 @@ export const api = {
       return request<{ events: any[] }>(`/api/calendly/events${qs ? `?${qs}` : ""}`);
     },
   },
-  googleCalendar: {
-    calendars: () =>
-      request<{ id: string; summary: string; primary: boolean; backgroundColor: string }[]>(
-        "/api/google-calendar/calendars"
-      ),
-    events: (calendarId?: string, start?: string, end?: string) => {
-      const params = new URLSearchParams();
-      if (calendarId) params.set("calendar_id", calendarId);
-      if (start) params.set("start", start);
-      if (end) params.set("end", end);
-      const qs = params.toString();
-      return request<any[]>(`/api/google-calendar/events${qs ? `?${qs}` : ""}`);
-    },
-    sync: (calendarId?: string, daysBack?: number, daysForward?: number) =>
-      request<{ created: number; updated: number; skipped: number }>(
-        "/api/google-calendar/sync",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            calendar_id: calendarId || "primary",
-            days_back: daysBack ?? 30,
-            days_forward: daysForward ?? 90,
-          }),
-        }
-      ),
-    pushEvent: (eventId: string, calendarId?: string) => {
-      const params = new URLSearchParams();
-      if (calendarId) params.set("calendar_id", calendarId);
-      const qs = params.toString();
-      return request<{ status: string; gcal_event_id: string }>(
-        `/api/google-calendar/push/${eventId}${qs ? `?${qs}` : ""}`,
-        { method: "POST" }
-      );
-    },
-    pushAll: (calendarId?: string) => {
-      const params = new URLSearchParams();
-      if (calendarId) params.set("calendar_id", calendarId);
-      const qs = params.toString();
-      return request<{ pushed: number; skipped: number }>(
-        `/api/google-calendar/push-all${qs ? `?${qs}` : ""}`,
-        { method: "POST" }
-      );
-    },
-  },
   eventbrite: {
     search: (params: {
       query?: string;

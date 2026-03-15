@@ -15,6 +15,7 @@ import { useAuth } from "../../hooks/useAuth";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
+import IntegrationCard from "../../components/integrations/IntegrationCard";
 import { api } from "../../lib/api";
 import * as Clipboard from "expo-clipboard";
 import { s, fontSize } from "../../lib/responsive";
@@ -28,6 +29,9 @@ interface Profile {
   email: string;
   gmail_connected: boolean;
   resy_connected: boolean;
+  square_connected: boolean;
+  calendly_connected: boolean;
+  eventbrite_connected: boolean;
   ical_feed_token: string;
 }
 
@@ -101,6 +105,33 @@ export default function SettingsScreen() {
     try {
       await api.resy.unlink();
       queryClient.setQueryData<Profile | undefined>(["profile"], (prev) => prev ? { ...prev, resy_connected: false } : prev);
+    } catch (e: any) {
+      Alert.alert("Error", e.message);
+    }
+  };
+
+  const connectOAuth = async (getUrl: () => Promise<{ url: string }>) => {
+    try {
+      const { url } = await getUrl();
+      if (typeof window !== "undefined") {
+        window.open(url, "_blank");
+      } else {
+        Linking.openURL(url);
+      }
+    } catch (e: any) {
+      Alert.alert("Error", e.message);
+    }
+  };
+
+  const disconnectIntegration = async (
+    unlinkFn: () => Promise<any>,
+    key: keyof Profile,
+  ) => {
+    try {
+      await unlinkFn();
+      queryClient.setQueryData<Profile | undefined>(["profile"], (prev) =>
+        prev ? { ...prev, [key]: false } : prev
+      );
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
@@ -222,6 +253,41 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <Text style={styles.sectionTitle}>Square Appointments</Text>
+      <IntegrationCard
+        connected={!!profile?.square_connected}
+        connectLabel="Connect Square"
+        description="Book haircuts, wellness appointments, and services through Square merchants."
+        onConnect={() => connectOAuth(api.square.getAuthUrl)}
+        onDisconnect={() => disconnectIntegration(api.square.unlink, "square_connected")}
+      />
+
+      <Text style={styles.sectionTitle}>Calendly</Text>
+      <IntegrationCard
+        connected={!!profile?.calendly_connected}
+        connectLabel="Connect Calendly"
+        description="Sync your Calendly meetings and scheduling links."
+        onConnect={() => connectOAuth(api.calendly.getAuthUrl)}
+        onDisconnect={() => disconnectIntegration(api.calendly.unlink, "calendly_connected")}
+      />
+
+      <Text style={styles.sectionTitle}>Google Calendar Sync</Text>
+      <IntegrationCard
+        connected={!!profile?.gmail_connected}
+        connectLabel="Connect Google"
+        description="2-way sync — pull Google Calendar events in and push CalendarAI events out. Uses your Gmail connection."
+        onConnect={connectGmail}
+      />
+
+      <Text style={styles.sectionTitle}>Eventbrite</Text>
+      <IntegrationCard
+        connected={!!profile?.eventbrite_connected}
+        connectLabel="Connect Eventbrite"
+        description="Discover events nearby and import them to your calendar. Search works without connecting."
+        onConnect={() => connectOAuth(api.eventbrite.getAuthUrl)}
+        onDisconnect={() => disconnectIntegration(api.eventbrite.unlink, "eventbrite_connected")}
+      />
 
       <Text style={styles.sectionTitle}>iCal Feed</Text>
       <View style={styles.card}>
