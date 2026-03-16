@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.auth.oauth_state import sign_state, verify_state
 from app.config import get_settings
 from app.services.encryption import encrypt, decrypt
 from app.services.eventbrite import (
@@ -27,16 +28,16 @@ logger = logging.getLogger("calendarai.eventbrite.router")
 @router.get("/auth-url")
 async def get_auth_url(user: AuthUser = Depends(get_current_user)):
     """Get the Eventbrite OAuth authorization URL."""
-    url = get_oauth_authorize_url(user.id)
+    url = get_oauth_authorize_url(sign_state(user.id))
     return {"url": url}
 
 
 @router.get("/callback")
 async def oauth_callback(code: str, state: str):
     """Handle OAuth callback from Eventbrite."""
+    user_id = verify_state(state)
     settings = get_settings()
     sb = get_supabase_admin()
-    user_id = state
 
     try:
         token_data = await exchange_oauth_code(code)
@@ -53,7 +54,7 @@ async def oauth_callback(code: str, state: str):
         "eventbrite_access_token": encrypt(access_token),
     }).eq("id", user_id).execute()
 
-    return RedirectResponse(url=settings.frontend_url + "/settings")
+    return RedirectResponse(url=settings.frontend_url + "/settings", status_code=303)
 
 
 @router.post("/unlink")
@@ -147,6 +148,18 @@ async def import_event(
         location = ", ".join(p for p in parts if p)
 
     sb = get_supabase_admin()
+
+    # Dedup — check if already imported
+    existing = (
+        sb.table("events")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("source", "eventbrite")
+        .eq("source_ref", event_id)
+        .execute()
+    )
+    if existing.data:
+        raise HTTPException(status_code=409, detail="Event already imported")
 
     # Get user timezone
     profile = sb.table("profiles").select("timezone").eq("id", user.id).single().execute()

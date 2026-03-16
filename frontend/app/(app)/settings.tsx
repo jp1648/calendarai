@@ -89,7 +89,7 @@ export default function SettingsScreen() {
     try {
       const { url } = await api.gmail.getAuthUrl();
       if (typeof window !== "undefined") {
-        window.open(url, "_blank");
+        window.open(url, "_blank", "noopener,noreferrer");
       } else {
         Linking.openURL(url);
       }
@@ -114,7 +114,7 @@ export default function SettingsScreen() {
     try {
       const { url } = await getUrl();
       if (typeof window !== "undefined") {
-        window.open(url, "_blank");
+        window.open(url, "_blank", "noopener,noreferrer");
       } else {
         Linking.openURL(url);
       }

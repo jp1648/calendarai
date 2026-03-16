@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.auth.oauth_state import sign_state, verify_state
 from app.config import get_settings
 from app.services.encryption import encrypt, decrypt
 from app.services.square import SquareClient
@@ -23,13 +24,14 @@ def _get_square_client(profile: dict) -> SquareClient:
 @router.get("/auth-url")
 async def get_auth_url(user: AuthUser = Depends(get_current_user)):
     """Return the Square OAuth authorization URL."""
-    url = SquareClient.get_auth_url(state=user.id)
+    url = SquareClient.get_auth_url(state=sign_state(user.id))
     return {"url": url}
 
 
 @router.get("/callback")
 async def oauth_callback(code: str, state: str):
     """Handle OAuth callback — exchange code for tokens and store them."""
+    user_id = verify_state(state)
     settings = get_settings()
     sb = get_supabase_admin()
 
@@ -43,7 +45,7 @@ async def oauth_callback(code: str, state: str):
         "square_access_token": encrypt(tokens["access_token"]),
         "square_refresh_token": encrypt(tokens["refresh_token"]) if tokens["refresh_token"] else None,
         "square_merchant_id": tokens.get("merchant_id", ""),
-    }).eq("id", state).execute()
+    }).eq("id", user_id).execute()
 
     return RedirectResponse(url=settings.frontend_url + "/settings", status_code=303)
 

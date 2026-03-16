@@ -124,6 +124,19 @@ async def import_event_to_calendar(
         description = f"{description}\n\nEventbrite: {url}".strip()
 
     sb = ctx.deps.supabase
+
+    # Dedup — check if already imported
+    existing = (
+        sb.table("events")
+        .select("id")
+        .eq("user_id", ctx.deps.user_id)
+        .eq("source", "eventbrite")
+        .eq("source_ref", event_id)
+        .execute()
+    )
+    if existing.data:
+        return {"status": "already_imported", "message": "This event is already on your calendar."}
+
     row = {
         "user_id": ctx.deps.user_id,
         "title": event.get("name", "Eventbrite Event"),

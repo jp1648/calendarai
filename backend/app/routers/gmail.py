@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.auth.oauth_state import sign_state, verify_state
 from app.agents.core import AgentRequest, AgentRunner
 from app.agents.core.schemas import TriggerMode
 from app.config import get_settings
@@ -26,18 +27,20 @@ runner = AgentRunner()
 
 @router.get("/auth-url")
 async def get_auth_url(user: AuthUser = Depends(get_current_user)):
+    signed = sign_state(user.id)
     flow = get_oauth_flow()
     auth_url, _ = flow.authorization_url(
         access_type="offline",
         prompt="consent",
-        state=user.id,
+        state=signed,
     )
     # Encode PKCE code_verifier in state so it survives the redirect
     code_verifier = getattr(flow, "code_verifier", None)
     if code_verifier:
         parsed = urlparse(auth_url)
         qs = parse_qs(parsed.query)
-        qs["state"] = [f"{user.id}:{code_verifier}"]
+        # Append code_verifier after the signed state using "|" separator
+        qs["state"] = [f"{signed}|{code_verifier}"]
         new_query = urlencode(qs, doseq=True)
         auth_url = urlunparse(parsed._replace(query=new_query))
     return {"url": auth_url}
@@ -48,11 +51,14 @@ async def oauth_callback(code: str, state: str):
     settings = get_settings()
     sb = get_supabase_admin()
 
-    # Parse state — may contain PKCE code_verifier as "user_id:code_verifier"
-    if ":" in state:
-        user_id, code_verifier = state.split(":", 1)
+    # Parse state — may contain PKCE code_verifier after "|" separator
+    code_verifier = None
+    if "|" in state:
+        signed_part, code_verifier = state.split("|", 1)
     else:
-        user_id, code_verifier = state, None
+        signed_part = state
+
+    user_id = verify_state(signed_part)
 
     flow = get_oauth_flow()
     if code_verifier:
@@ -80,7 +86,7 @@ async def oauth_callback(code: str, state: str):
         except Exception:
             pass  # Watch is optional — Gmail tools still work without push
 
-    return RedirectResponse(url=settings.frontend_url + "/settings")
+    return RedirectResponse(url=settings.frontend_url + "/settings", status_code=303)
 
 
 class PubSubMessage(BaseModel):

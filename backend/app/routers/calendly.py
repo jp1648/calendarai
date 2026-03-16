@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.auth.oauth_state import sign_state, verify_state
 from app.config import get_settings
 from app.services.calendly import CalendlyClient
 from app.services.encryption import encrypt, decrypt
@@ -56,15 +57,15 @@ async def _get_client(user_id: str) -> CalendlyClient:
 @router.get("/auth-url")
 async def get_auth_url(user: AuthUser = Depends(get_current_user)):
     """Return the Calendly OAuth authorization URL."""
-    url = CalendlyClient.get_auth_url(state=user.id)
+    url = CalendlyClient.get_auth_url(state=sign_state(user.id))
     return {"url": url}
 
 
 @router.get("/callback")
 async def oauth_callback(code: str, state: str):
     """Handle Calendly OAuth callback — exchange code for tokens and store them."""
+    user_id = verify_state(state)
     settings = get_settings()
-    user_id = state
 
     try:
         tokens = await CalendlyClient.exchange_code(code)
@@ -85,7 +86,7 @@ async def oauth_callback(code: str, state: str):
         "calendly_user_uri": user_uri,
     }).eq("id", user_id).execute()
 
-    return RedirectResponse(url=settings.frontend_url + "/settings")
+    return RedirectResponse(url=settings.frontend_url + "/settings", status_code=303)
 
 
 @router.post("/unlink")
