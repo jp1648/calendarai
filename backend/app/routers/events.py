@@ -3,7 +3,9 @@ from typing import Literal, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, model_validator
+import json
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.services.supabase import get_supabase_admin
@@ -45,6 +47,13 @@ class EventCreate(BaseModel):
             raise ValueError("end_time must be after start_time")
         return self
 
+    @field_validator("metadata")
+    @classmethod
+    def metadata_size_limit(cls, v):
+        if v and len(json.dumps(v)) > 10_000:
+            raise ValueError("metadata too large (max 10KB)")
+        return v
+
 
 class EventUpdate(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=255)
@@ -53,6 +62,12 @@ class EventUpdate(BaseModel):
     start_time: datetime | None = None
     end_time: datetime | None = None
     all_day: bool | None = None
+
+    @model_validator(mode="after")
+    def end_after_start(self):
+        if self.start_time and self.end_time and self.end_time <= self.start_time:
+            raise ValueError("end_time must be after start_time")
+        return self
 
 
 @router.get("")

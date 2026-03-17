@@ -1,3 +1,5 @@
+from html import escape
+
 from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
@@ -18,6 +20,8 @@ class ResyConnectRequest(BaseModel):
 
 def _render_form(token: str, error: str = "", email: str = "") -> str:
     """Render the Resy login HTML page."""
+    error = escape(error)
+    email = escape(email)
     error_html = ""
     if error:
         error_html = f"""

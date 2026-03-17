@@ -13,6 +13,7 @@ import { Link } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
+import { isValidEmail, normalizeEmail } from "../../lib/validation";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -21,9 +22,9 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedEmail = normalizeEmail(email);
     if (!trimmedEmail || !password) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       Alert.alert("Error", "Please enter a valid email address");
       return;
     }

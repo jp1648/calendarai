@@ -87,6 +87,7 @@ class PubSubMessageData(BaseModel):
     data: str
     message_id: str | None = None
 
+
 class PubSubMessage(BaseModel):
     message: PubSubMessageData
     subscription: str = Field(max_length=500)

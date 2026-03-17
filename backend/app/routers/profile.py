@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -48,7 +50,6 @@ async def update_profile(
     sb = get_supabase_admin()
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if "timezone" in updates:
-        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
         try:
             ZoneInfo(updates["timezone"])
         except (ZoneInfoNotFoundError, KeyError):
