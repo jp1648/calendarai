@@ -1,7 +1,9 @@
 """Calendar sharing & booking invites API."""
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.services.supabase import get_supabase_admin
@@ -12,12 +14,12 @@ router = APIRouter(prefix="/api/sharing", tags=["sharing"])
 # -- Schemas --
 
 class GrantPermission(BaseModel):
-    grantee_email: str
-    level: str = "free_busy"  # free_busy | view | book | book_confirm
+    grantee_email: EmailStr
+    level: Literal["free_busy", "view", "book", "book_confirm"] = "free_busy"
 
 
 class InviteResponse(BaseModel):
-    status: str  # accepted | declined
+    status: Literal["accepted", "declined"]
 
 
 # -- Permissions --
@@ -44,9 +46,6 @@ async def list_permissions(user: AuthUser = Depends(get_current_user)):
 @router.post("/permissions", status_code=status.HTTP_201_CREATED)
 async def grant_permission(body: GrantPermission, user: AuthUser = Depends(get_current_user)):
     """Grant calendar access to another user by email."""
-    if body.level not in ("free_busy", "view", "book", "book_confirm"):
-        raise HTTPException(status_code=400, detail="Invalid permission level")
-
     sb = get_supabase_admin()
 
     # Look up grantee by email
@@ -112,9 +111,6 @@ async def respond_to_invite(
     invite_id: str, body: InviteResponse, user: AuthUser = Depends(get_current_user)
 ):
     """Accept or decline a booking invite. Accepting creates the event on your calendar."""
-    if body.status not in ("accepted", "declined"):
-        raise HTTPException(status_code=400, detail="Status must be 'accepted' or 'declined'")
-
     sb = get_supabase_admin()
 
     # Fetch the invite

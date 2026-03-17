@@ -83,15 +83,20 @@ async def oauth_callback(code: str, state: str):
     return RedirectResponse(url=settings.frontend_url + "/settings")
 
 
+class PubSubMessageData(BaseModel):
+    data: str
+    message_id: str | None = None
+
+
 class PubSubMessage(BaseModel):
-    message: dict
-    subscription: str
+    message: PubSubMessageData
+    subscription: str = Field(max_length=500)
 
 
 @router.post("/webhook")
 async def gmail_webhook(body: PubSubMessage, background_tasks: BackgroundTasks):
     """Receives Gmail push notifications via Google Pub/Sub."""
-    data = json.loads(base64.b64decode(body.message["data"]).decode("utf-8"))
+    data = json.loads(base64.b64decode(body.message.data).decode("utf-8"))
     email_address = data.get("emailAddress")
     history_id = data.get("historyId")
 

@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.services.supabase import get_supabase_admin
@@ -19,10 +21,10 @@ class ProfileResponse(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
-    full_name: str | None = None
-    phone: str | None = None
-    timezone: str | None = None
-    default_location: str | None = None
+    full_name: str | None = Field(None, max_length=100)
+    phone: str | None = Field(None, max_length=20, pattern=r"^(\+?\d[\d\s\-().]{0,18})?$")
+    timezone: str | None = Field(None, max_length=50)
+    default_location: str | None = Field(None, max_length=200)
 
 
 @router.get("", response_model=ProfileResponse)
@@ -32,9 +34,11 @@ async def get_profile(user: AuthUser = Depends(get_current_user)):
         sb.table("profiles")
         .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token")
         .eq("id", user.id)
-        .single()
+        .maybe_single()
         .execute()
     )
+    if not result.data:
+        raise HTTPException(status_code=401, detail="Account not found")
     return result.data
 
 
@@ -45,6 +49,11 @@ async def update_profile(
 ):
     sb = get_supabase_admin()
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if "timezone" in updates:
+        try:
+            ZoneInfo(updates["timezone"])
+        except (ZoneInfoNotFoundError, KeyError):
+            raise HTTPException(status_code=422, detail="Invalid timezone")
     if updates:
         sb.table("profiles").update(updates).eq("id", user.id).execute()
 

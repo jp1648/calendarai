@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Literal, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+import json
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.services.supabase import get_supabase_admin
@@ -28,25 +30,44 @@ router = APIRouter(prefix="/api/events", tags=["events"])
 
 
 class EventCreate(BaseModel):
-    title: str
-    description: str = ""
-    location: str = ""
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field("", max_length=5000)
+    location: str = Field("", max_length=500)
     start_time: datetime
     end_time: datetime
     all_day: bool = False
-    source: str = "manual"
-    source_ref: str | None = None
-    confidence: float = 1.0
+    source: Literal["manual", "email_agent", "schedule_agent"] = "manual"
+    source_ref: str | None = Field(None, max_length=500)
+    confidence: float = Field(1.0, ge=0.0, le=1.0)
     metadata: dict | None = None
+
+    @model_validator(mode="after")
+    def end_after_start(self):
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be after start_time")
+        return self
+
+    @field_validator("metadata")
+    @classmethod
+    def metadata_size_limit(cls, v):
+        if v and len(json.dumps(v)) > 10_000:
+            raise ValueError("metadata too large (max 10KB)")
+        return v
 
 
 class EventUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    location: str | None = None
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=5000)
+    location: str | None = Field(None, max_length=500)
     start_time: datetime | None = None
     end_time: datetime | None = None
     all_day: bool | None = None
+
+    @model_validator(mode="after")
+    def end_after_start(self):
+        if self.start_time and self.end_time and self.end_time <= self.start_time:
+            raise ValueError("end_time must be after start_time")
+        return self
 
 
 @router.get("")

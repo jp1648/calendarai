@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import { api } from "../../lib/api";
@@ -16,6 +17,7 @@ import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -26,7 +28,8 @@ export default function WelcomeScreen() {
     setSaving(true);
     setError("");
     try {
-      await api.profile.update({ full_name: trimmed });
+      const updated = await api.profile.update({ full_name: trimmed });
+      queryClient.setQueryData(["profile"], updated);
       router.push("/(onboarding)/connect");
     } catch (e: any) {
       setError(e.message || "Could not save your name.");
@@ -52,6 +55,7 @@ export default function WelcomeScreen() {
           placeholder="Your name"
           placeholderTextColor={EARTHY.stoneLight}
           autoFocus
+          maxLength={100}
           returnKeyType="done"
           onSubmitEditing={handleContinue}
         />

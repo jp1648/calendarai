@@ -15,8 +15,8 @@ class RunStatus(str, Enum):
 
 class AgentRequest(BaseModel):
     """Unified input for any agent invocation."""
-    agent_name: str
-    input: str
+    agent_name: str = Field(max_length=50)
+    input: str = Field(max_length=5000)
     trigger_mode: TriggerMode = TriggerMode.PULL
     metadata: dict = Field(default_factory=dict)
 

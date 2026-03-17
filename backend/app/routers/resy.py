@@ -1,5 +1,8 @@
+from html import escape
+
 from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.middleware import AuthUser, get_current_user, validate_token
 from app.config import get_settings
@@ -10,8 +13,15 @@ from app.services.supabase import get_supabase_admin
 router = APIRouter(prefix="/api/resy", tags=["resy"])
 
 
+class ResyConnectRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=200)
+
+
 def _render_form(token: str, error: str = "", email: str = "") -> str:
     """Render the Resy login HTML page."""
+    error = escape(error)
+    email = escape(email)
     error_html = ""
     if error:
         error_html = f"""
@@ -219,18 +229,13 @@ async def resy_link_submit(
 
 @router.post("/connect")
 async def resy_connect_json(
-    data: dict,
+    body: ResyConnectRequest,
     user: AuthUser = Depends(get_current_user),
 ):
     """JSON endpoint for in-app Resy connection."""
-    email = data.get("email", "")
-    password = data.get("password", "")
-    if not email or not password:
-        raise HTTPException(status_code=400, detail="Email and password are required")
-
     try:
         client = ResyClient()
-        result = await client.login(email, password)
+        result = await client.login(body.email, body.password)
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
     except Exception as e:
