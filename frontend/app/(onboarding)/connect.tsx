@@ -75,6 +75,30 @@ export default function ConnectScreen() {
           )}
         </View>
 
+        {/* Google Calendar Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Google Calendar</Text>
+            {profile?.gmail_connected && (
+              <View style={styles.connectedBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.connectedText}>Ready</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.cardDescription}>
+            Import your existing events so the AI knows your real schedule.
+            {!profile?.gmail_connected ? " Connect Gmail above to enable." : ""}
+          </Text>
+          {profile?.gmail_connected && (
+            <View style={styles.connectedBadge}>
+              <Text style={styles.connectedText}>
+                Enabled via Gmail connection
+              </Text>
+            </View>
+          )}
+        </View>
+
         {/* Resy Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
