@@ -23,6 +23,7 @@ dependencies = [
     "playwright>=1.40",
     "python-multipart>=0.0.22",
     "browser-use>=0.12.1",
+    "email-validator>=2.3.0",
 ]
 
 [tool.pytest.ini_options]

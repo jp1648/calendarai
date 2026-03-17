@@ -52,6 +52,7 @@ export default function WelcomeScreen() {
           placeholder="Your name"
           placeholderTextColor={EARTHY.stoneLight}
           autoFocus
+          maxLength={100}
           returnKeyType="done"
           onSubmitEditing={handleContinue}
         />

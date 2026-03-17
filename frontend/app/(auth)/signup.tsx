@@ -21,14 +21,19 @@ export default function SignupScreen() {
   const { signUp } = useAuth();
 
   const handleSignup = async () => {
-    if (!email || !password) return;
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
     if (password.length < 6) {
       Alert.alert("Error", "Password must be at least 6 characters");
       return;
     }
     setLoading(true);
     try {
-      await signUp(email, password);
+      await signUp(trimmedEmail, password);
       Alert.alert("Success", "Check your email to confirm your account");
     } catch (e: any) {
       Alert.alert("Error", e.message);

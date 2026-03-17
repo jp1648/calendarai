@@ -10,10 +10,10 @@ from app.agents.core.router import pick_scheduler
 
 class ScheduleRequest(BaseModel):
     input: str = Field(max_length=2000)
-    thread_id: str | None = None
-    location: str | None = None
-    latitude: float | None = None
-    longitude: float | None = None
+    thread_id: str | None = Field(None, max_length=100)
+    location: str | None = Field(None, max_length=200)
+    latitude: float | None = Field(None, ge=-90, le=90)
+    longitude: float | None = Field(None, ge=-180, le=180)
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 runner = AgentRunner()

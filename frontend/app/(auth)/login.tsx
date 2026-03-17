@@ -21,10 +21,15 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) return;
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(trimmedEmail, password);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     } finally {
