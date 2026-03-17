@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import events, agents, gmail, ical, sharing, profile, resy
+from app.routers import events, agents, gmail, google_calendar, ical, sharing, profile, resy
 from app.services.supabase import get_supabase_client
 
 app = FastAPI(title="CalendarAI", version="0.1.0")
@@ -35,6 +35,7 @@ app.add_middleware(
 app.include_router(events.router)
 app.include_router(agents.router)
 app.include_router(gmail.router)
+app.include_router(google_calendar.router)
 app.include_router(ical.router)
 app.include_router(sharing.router)
 app.include_router(profile.router)

@@ -40,6 +40,7 @@ export default function SettingsScreen() {
     staleTime: 1000 * 60 * 10,
   });
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // Editable fields
   const [fullName, setFullName] = useState("");
@@ -103,6 +104,31 @@ export default function SettingsScreen() {
       queryClient.setQueryData<Profile | undefined>(["profile"], (prev) => prev ? { ...prev, resy_connected: false } : prev);
     } catch (e: any) {
       Alert.alert("Error", e.message);
+    }
+  };
+
+  const syncGoogleCalendar = async () => {
+    setSyncing(true);
+    try {
+      const result = await api.googleCalendar.sync();
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      Alert.alert("Synced", `${result.created} new, ${result.updated} updated events from Google Calendar.`);
+    } catch (e: any) {
+      Alert.alert("Error", e.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const pushAllToGoogle = async () => {
+    setSyncing(true);
+    try {
+      const result = await api.googleCalendar.pushAll();
+      Alert.alert("Pushed", `${result.pushed} events pushed to Google Calendar.`);
+    } catch (e: any) {
+      Alert.alert("Error", e.message);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -198,6 +224,40 @@ export default function SettingsScreen() {
           <TouchableOpacity style={styles.actionButton} onPress={connectGmail}>
             <Text style={styles.actionButtonText}>Connect Gmail</Text>
           </TouchableOpacity>
+        )}
+      </View>
+
+      <Text style={styles.sectionTitle}>Google Calendar</Text>
+      <View style={styles.card}>
+        {profile?.gmail_connected ? (
+          <View>
+            <View style={styles.row}>
+              <View style={styles.statusDot} />
+              <Text style={styles.value}>Connected via Gmail</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.actionButton, { marginTop: s(12) }, syncing && styles.buttonDisabled]}
+              onPress={syncGoogleCalendar}
+              disabled={syncing}
+            >
+              <Text style={styles.actionButtonText}>
+                {syncing ? "Syncing..." : "Sync from Google"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.outlineButton, { marginTop: s(8) }, syncing && styles.buttonDisabled]}
+              onPress={pushAllToGoogle}
+              disabled={syncing}
+            >
+              <Text style={styles.outlineButtonText}>
+                {syncing ? "Pushing..." : "Push to Google"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text style={styles.helpTextInCard}>
+            Connect Gmail above to enable Google Calendar sync.
+          </Text>
         )}
       </View>
 

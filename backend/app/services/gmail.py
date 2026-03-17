@@ -16,7 +16,10 @@ def get_oauth_flow() -> Flow:
                 "token_uri": "https://oauth2.googleapis.com/token",
             }
         },
-        scopes=["https://www.googleapis.com/auth/gmail.readonly"],
+        scopes=[
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/calendar",
+        ],
         redirect_uri=settings.google_redirect_uri,
     )
     return flow
