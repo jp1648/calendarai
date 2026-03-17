@@ -13,7 +13,7 @@ import { Link } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
-import { isValidEmail, normalizeEmail } from "../../lib/validation";
+import { isValidEmail, normalizeEmail, validatePassword } from "../../lib/validation";
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -28,8 +28,9 @@ export default function SignupScreen() {
       Alert.alert("Error", "Please enter a valid email address");
       return;
     }
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      Alert.alert("Error", passwordError);
       return;
     }
     setLoading(true);
