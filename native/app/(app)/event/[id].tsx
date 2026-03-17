@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: EARTHY.cream },
   notFoundText: { fontSize: fontSize(15), color: EARTHY.stone, fontFamily: FONTS.body },
   headerButton: { marginRight: s(4) },
-  deleteText: { color: "#EF4444", fontSize: fontSize(15), fontFamily: FONTS.bodyMedium },
+  deleteText: { color: "#944B43", fontSize: fontSize(15), fontFamily: FONTS.bodyMedium },
   label: { fontSize: fontSize(13), fontFamily: FONTS.bodyMedium, color: EARTHY.stone, marginBottom: s(6), marginTop: s(16) },
   input: { borderWidth: 1, borderColor: EARTHY.sand, borderRadius: s(14), padding: s(16), fontSize: fontSize(16), backgroundColor: EARTHY.white, color: EARTHY.bark, fontFamily: FONTS.body },
   multiline: { minHeight: s(80), textAlignVertical: "top" },

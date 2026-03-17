@@ -1,19 +1,19 @@
 import { CalendarEvent } from "../stores/eventStore";
 
-/* ── Earthy palette ── */
+/* ── Nautical palette ── */
 export const EARTHY = {
-  cream: "#F5F0EA",
-  sand: "#E8DFD4",
-  sandLight: "#EFE8DF",
-  bark: "#3B2F26",
-  barkSoft: "#5C4D40",
-  stone: "#8A7D70",
-  stoneLight: "#B5AA9E",
-  fog: "#D6CEC5",
-  white: "#FDFBF9",
+  cream: "#F2F5F7",
+  sand: "#C5D5D9",
+  sandLight: "#E4EAED",
+  bark: "#012340",
+  barkSoft: "#024059",
+  stone: "#97A4A6",
+  stoneLight: "#B8C4C9",
+  fog: "#D4DDE0",
+  white: "#FAFCFD",
 } as const;
 
-export const ACCENT = "#C0785A";
+export const ACCENT = "#024059";
 
 /* ── Font family strings (loaded via useFonts in _layout) ── */
 export const FONTS = {
@@ -29,45 +29,45 @@ export const FONTS = {
 export const CATEGORIES = {
   fun: {
     label: "Fun",
-    bg: "rgba(232,168,124,0.14)",
-    border: "#E8A87C",
-    text: "#C07A4E",
-    dot: "#E8A87C",
+    bg: "rgba(184,133,92,0.14)",
+    border: "#B8855C",
+    text: "#8C6046",
+    dot: "#B8855C",
   },
   appointments: {
     label: "Appointments",
-    bg: "rgba(184,169,201,0.16)",
-    border: "#B8A9C9",
-    text: "#8A7BA0",
-    dot: "#B8A9C9",
+    bg: "rgba(2,64,89,0.12)",
+    border: "#024059",
+    text: "#012340",
+    dot: "#024059",
   },
   personal: {
     label: "Personal",
-    bg: "rgba(163,188,140,0.15)",
-    border: "#A3BC8C",
-    text: "#6E8A56",
-    dot: "#A3BC8C",
+    bg: "rgba(91,129,153,0.12)",
+    border: "#5B8199",
+    text: "#3D6478",
+    dot: "#5B8199",
   },
   wellness: {
     label: "Wellness",
-    bg: "rgba(134,195,185,0.14)",
-    border: "#86C3B9",
-    text: "#5A9E92",
-    dot: "#86C3B9",
+    bg: "rgba(58,125,110,0.10)",
+    border: "#3A7D6E",
+    text: "#2B5E52",
+    dot: "#3A7D6E",
   },
   work: {
     label: "Work",
-    bg: "rgba(154,180,214,0.14)",
-    border: "#9AB4D6",
-    text: "#6586AE",
-    dot: "#9AB4D6",
+    bg: "rgba(62,107,138,0.12)",
+    border: "#3E6B8A",
+    text: "#2A4F6B",
+    dot: "#3E6B8A",
   },
   errands: {
     label: "Errands",
-    bg: "rgba(210,186,145,0.16)",
-    border: "#D2BA91",
-    text: "#A08A5C",
-    dot: "#D2BA91",
+    bg: "rgba(122,96,84,0.12)",
+    border: "#7A6054",
+    text: "#5C4840",
+    dot: "#7A6054",
   },
 } as const;
 

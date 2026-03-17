@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     width: s(7),
     height: s(7),
     borderRadius: s(4),
-    backgroundColor: "#86C3B9",
+    backgroundColor: "#3A7D6E",
   },
   chatHeaderText: {
     fontFamily: FONTS.heading,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     width: s(7),
     height: s(7),
     borderRadius: s(4),
-    backgroundColor: "#86C3B9",
+    backgroundColor: "#3A7D6E",
   },
   statusText: {
     fontSize: fontSize(13),

@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     width: s(8),
     height: s(8),
     borderRadius: s(4),
-    backgroundColor: "#86C3B9",
+    backgroundColor: "#3A7D6E",
   },
   saveButton: {
     backgroundColor: ACCENT,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   signOutText: {
-    color: "#EF4444",
+    color: "#944B43",
     fontSize: fontSize(15),
     fontFamily: FONTS.bodyMedium,
   },

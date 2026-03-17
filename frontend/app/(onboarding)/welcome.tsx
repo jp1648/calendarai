@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
   },
   error: {
-    color: "#991B1B",
+    color: "#7A3D3D",
     fontSize: fontSize(13),
     fontFamily: FONTS.body,
     marginTop: s(8),

@@ -136,7 +136,7 @@ export default function ResyConnectModal({ visible, onClose, onConnected }: Prop
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(59,47,38,0.4)",
+    backgroundColor: "rgba(1,35,64,0.4)",
     justifyContent: "flex-end",
   },
   modalKeyboard: {
@@ -204,20 +204,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
   },
   resyErrorBox: {
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "rgba(140,70,70,0.08)",
     borderWidth: 1,
-    borderColor: "#FECACA",
+    borderColor: "#8C4646",
     borderRadius: s(10),
     padding: s(12),
     marginBottom: s(8),
   },
   resyErrorText: {
-    color: "#991B1B",
+    color: "#7A3D3D",
     fontSize: fontSize(13),
     fontFamily: FONTS.body,
   },
   resySubmitButton: {
-    backgroundColor: "#C0935A",
+    backgroundColor: "#8C6046",
     borderRadius: s(12),
     padding: s(16),
     alignItems: "center",

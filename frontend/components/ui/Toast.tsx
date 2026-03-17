@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
   },
   containerError: {
-    backgroundColor: "#991B1B",
+    backgroundColor: "#7A3D3D",
   },
 });

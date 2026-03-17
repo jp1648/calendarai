@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
   },
   deleteText: {
-    color: "#EF4444",
+    color: "#944B43",
     fontSize: fontSize(15),
     fontFamily: FONTS.bodyMedium,
   },

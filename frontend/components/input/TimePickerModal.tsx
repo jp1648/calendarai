@@ -134,7 +134,7 @@ function to24(hour12: number, ampm: "AM" | "PM"): number {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(59,47,38,0.18)",
+    backgroundColor: "rgba(1,35,64,0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
