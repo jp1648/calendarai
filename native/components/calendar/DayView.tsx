@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     marginTop: s(4),
   },
   deleteAction: {
-    backgroundColor: "#EF4444",
+    backgroundColor: "#944B43",
     justifyContent: "center",
     alignItems: "flex-end",
     paddingHorizontal: s(20),

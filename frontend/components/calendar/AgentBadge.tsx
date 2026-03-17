@@ -7,8 +7,8 @@ interface Props {
 }
 
 const BADGE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  email_agent: { label: "Email", color: "#C07A4E", bg: "rgba(232,168,124,0.14)" },
-  schedule_agent: { label: "AI", color: "#8A7BA0", bg: "rgba(184,169,201,0.16)" },
+  email_agent: { label: "Email", color: "#8C6046", bg: "rgba(140,96,70,0.12)" },
+  schedule_agent: { label: "AI", color: "#012340", bg: "rgba(2,64,89,0.10)" },
 };
 
 export default function AgentBadge({ source }: Props) {

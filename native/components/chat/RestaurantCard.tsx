@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   rating: {
     fontSize: fontSize(13),
-    color: "#E8A87C",
+    color: "#B8855C",
     fontFamily: FONTS.bodyMedium,
   },
   meta: {
