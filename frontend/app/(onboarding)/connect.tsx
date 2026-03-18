@@ -50,8 +50,18 @@ export default function ConnectScreen() {
     });
   }, []);
 
-  const handleLocationPress = useCallback(() => {
-    setLocationEnabled(true);
+  const handleLocationPress = useCallback(async () => {
+    try {
+      const Location = require("expo-location") as typeof import("expo-location");
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setLocationEnabled(true);
+      } else {
+        setLocationEnabled(true); // will trigger error state via hook
+      }
+    } catch {
+      setLocationEnabled(true);
+    }
   }, []);
 
   // Save location to profile once when it first comes in

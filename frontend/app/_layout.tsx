@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LogBox } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 
@@ -38,6 +38,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const router = useRouter();
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const hasNavigated = useRef(false);
 
   // Prefetch profile as soon as user is authenticated
   useEffect(() => {
@@ -56,6 +57,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [session]);
 
+  // Reset navigation guard when session changes (login/logout)
+  useEffect(() => {
+    hasNavigated.current = false;
+  }, [session]);
+
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === "(auth)";
@@ -65,7 +71,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     } else if (session && profileLoaded) {
       const profile = queryClient.getQueryData<{ onboarding_completed: boolean }>(["profile"]);
       if (!profile?.onboarding_completed) {
-        if (!inOnboardingGroup) router.replace("/(onboarding)/connect");
+        if (!inOnboardingGroup && !hasNavigated.current) {
+          hasNavigated.current = true;
+          router.replace("/(onboarding)/connect");
+        }
       } else if (inAuthGroup || inOnboardingGroup) {
         router.replace("/(app)");
       }
