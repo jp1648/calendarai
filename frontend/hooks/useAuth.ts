@@ -8,15 +8,27 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error || (session && !session.user)) {
+        // Stale/invalid session — silently clear it
+        await supabase.auth.signOut().catch(() => {});
+        setSession(null);
+      } else {
+        setSession(session);
+      }
       setLoading(false);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "TOKEN_REFRESHED" && !session) {
+        // Refresh failed — stale token, silently clear
+        await supabase.auth.signOut().catch(() => {});
+        setSession(null);
+      } else {
+        setSession(session);
+      }
     });
 
     return () => subscription.unsubscribe();

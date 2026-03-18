@@ -5,7 +5,7 @@ from urllib.parse import urlencode, urlparse, parse_qs, urlunparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.auth.middleware import AuthUser, get_current_user
 from app.agents.core import AgentRequest, AgentRunner

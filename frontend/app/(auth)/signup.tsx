@@ -9,36 +9,58 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
+import { api } from "../../lib/api";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 import { isValidEmail, normalizeEmail, validatePassword } from "../../lib/validation";
 
+const PASSWORD_RULES = [
+  { test: (p: string) => p.length >= 8, label: "8+ characters" },
+  { test: (p: string) => /[A-Z]/.test(p), label: "Uppercase letter" },
+  { test: (p: string) => /[0-9]/.test(p), label: "Number" },
+  { test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "Special character" },
+];
+
 export default function SignupScreen() {
+  const { firstName, lastName } = useLocalSearchParams<{ firstName?: string; lastName?: string }>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { signUp } = useAuth();
 
+  const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password));
+
   const handleSignup = async () => {
+    setError("");
     const trimmedEmail = normalizeEmail(email);
-    if (!trimmedEmail || !password) return;
+    if (!trimmedEmail) {
+      setError("Please enter your email");
+      return;
+    }
     if (!isValidEmail(trimmedEmail)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      setError("Please enter a valid email address");
       return;
     }
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      Alert.alert("Error", passwordError);
+    if (!password) {
+      setError("Please enter a password");
       return;
     }
+    if (!allRulesPassed) return;
     setLoading(true);
     try {
       await signUp(trimmedEmail, password);
-      Alert.alert("Success", "Check your email to confirm your account");
+      // Save name to profile if provided from name screen
+      if (firstName || lastName) {
+        const fullName = [firstName, lastName].filter(Boolean).join(" ");
+        try {
+          await api.profile.update({ full_name: fullName });
+        } catch {}
+      }
     } catch (e: any) {
-      Alert.alert("Error", e.message);
+      setError(e.message);
     } finally {
       setLoading(false);
     }
@@ -52,7 +74,9 @@ export default function SignupScreen() {
       <View style={styles.inner}>
         <View style={styles.header}>
           <Text style={styles.title}>CalendarAI</Text>
-          <Text style={styles.subtitle}>Create your account</Text>
+          <Text style={styles.subtitle}>
+            {firstName ? `Hey ${firstName}, create your account` : "Create your account"}
+          </Text>
         </View>
 
         <View style={styles.form}>
@@ -69,15 +93,33 @@ export default function SignupScreen() {
             style={styles.input}
             placeholder="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(t) => { setPassword(t); setError(""); }}
             secureTextEntry
             placeholderTextColor={EARTHY.stoneLight}
           />
 
+          {password.length > 0 && (
+            <View style={styles.rules}>
+              {PASSWORD_RULES.map((rule) => {
+                const passed = rule.test(password);
+                return (
+                  <Text
+                    key={rule.label}
+                    style={[styles.ruleText, passed && styles.ruleTextPassed]}
+                  >
+                    {passed ? "\u2713" : "\u2022"} {rule.label}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, (loading || (password.length > 0 && !allRulesPassed)) && styles.buttonDisabled]}
             onPress={handleSignup}
-            disabled={loading}
+            disabled={loading || (password.length > 0 && !allRulesPassed)}
           >
             <Text style={styles.buttonText}>
               {loading ? "Creating account..." : "Sign up"}
@@ -163,5 +205,23 @@ const styles = StyleSheet.create({
   linkBold: {
     color: ACCENT,
     fontFamily: FONTS.bodyMedium,
+  },
+  rules: {
+    gap: s(4),
+    paddingHorizontal: s(4),
+  },
+  ruleText: {
+    fontSize: fontSize(12),
+    fontFamily: FONTS.body,
+    color: EARTHY.stone,
+  },
+  ruleTextPassed: {
+    color: "#3A7D6E",
+  },
+  errorText: {
+    fontSize: fontSize(13),
+    fontFamily: FONTS.body,
+    color: "#B44040",
+    paddingHorizontal: s(4),
   },
 });

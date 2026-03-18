@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Linking,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,14 @@ export default function ConnectScreen() {
   });
 
   const [resyModalVisible, setResyModalVisible] = useState(false);
+
+  const handleGetStarted = async () => {
+    try {
+      await api.profile.update({ onboarding_completed: true } as any);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    } catch {}
+    router.replace("/(app)");
+  };
 
   const connectGmail = async () => {
     try {
@@ -126,13 +135,13 @@ export default function ConnectScreen() {
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={() => router.push("/(onboarding)/permissions")}
+            onPress={handleGetStarted}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>Get started</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={() => router.push("/(onboarding)/permissions")}
+            onPress={handleGetStarted}
           >
             <Text style={styles.skipText}>Skip for now</Text>
           </TouchableOpacity>

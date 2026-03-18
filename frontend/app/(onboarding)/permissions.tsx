@@ -7,14 +7,17 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import { useLocation } from "../../hooks/useLocation";
+import { api } from "../../lib/api";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
 export default function PermissionsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Location: don't auto-request — wait for user tap
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -55,7 +58,11 @@ export default function PermissionsScreen() {
     }
   }, []);
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
+    try {
+      await api.profile.update({ onboarding_completed: true } as any);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    } catch {}
     router.replace("/(app)");
   };
 
