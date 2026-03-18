@@ -85,11 +85,7 @@ export default function SettingsScreen() {
   const connectGmail = async () => {
     try {
       const { url } = await api.gmail.getAuthUrl();
-      if (typeof window !== "undefined") {
-        window.open(url, "_blank");
-      } else {
-        Linking.openURL(url);
-      }
+      Linking.openURL(url);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }

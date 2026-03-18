@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
+import { useLocation } from "../../hooks/useLocation";
 import { api } from "../../lib/api";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
@@ -28,6 +29,24 @@ export default function ConnectScreen() {
   });
 
   const [resyModalVisible, setResyModalVisible] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const { location, error: locationError } = useLocation({ enabled: locationEnabled });
+  const locationGranted = locationEnabled && !!location && !locationError;
+  const locationDenied = locationEnabled && !!locationError;
+
+  const locationSaved = useRef(false);
+
+  const handleLocationPress = useCallback(() => {
+    setLocationEnabled(true);
+  }, []);
+
+  // Save location to profile once when it first comes in
+  useEffect(() => {
+    if (locationGranted && location && !locationSaved.current) {
+      locationSaved.current = true;
+      api.profile.update({ default_location: location.displayName }).catch(() => {});
+    }
+  }, [locationGranted, location]);
 
   const handleGetStarted = async () => {
     try {
@@ -40,11 +59,7 @@ export default function ConnectScreen() {
   const connectGmail = async () => {
     try {
       const { url } = await api.gmail.getAuthUrl();
-      if (typeof window !== "undefined") {
-        window.open(url, "_blank");
-      } else {
-        Linking.openURL(url);
-      }
+      Linking.openURL(url);
       // Poll for profile update after OAuth window opens
       setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 5000);
       setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 15000);
@@ -55,8 +70,8 @@ export default function ConnectScreen() {
 
   return (
     <ScreenContainer>
-      <ScreenHeader left="back" title="Connect" />
-      <View style={styles.container}>
+      <ScreenHeader left={null} title="Connect" />
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <Text style={styles.headline}>Connect your accounts</Text>
         <Text style={styles.subtext}>
           Link your accounts so the AI can manage bookings and parse events from
@@ -132,6 +147,34 @@ export default function ConnectScreen() {
           )}
         </View>
 
+        {/* Location Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Location</Text>
+            {locationGranted && (
+              <View style={styles.connectedBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.connectedText}>Enabled</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.cardDescription}>
+            Helps find nearby restaurants and suggest relevant event locations.
+          </Text>
+          {locationGranted ? (
+            <Text style={styles.locationText}>{location?.displayName}</Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.connectButton}
+              onPress={handleLocationPress}
+            >
+              <Text style={styles.connectButtonText}>
+                {locationDenied ? "Permission denied" : "Enable Location"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.continueButton}
@@ -146,7 +189,7 @@ export default function ConnectScreen() {
             <Text style={styles.skipText}>Skip for now</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <ResyConnectModal
         visible={resyModalVisible}
@@ -157,7 +200,8 @@ export default function ConnectScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: s(24), paddingTop: s(8) },
+  container: { flex: 1 },
+  contentContainer: { paddingHorizontal: s(24), paddingTop: s(8), paddingBottom: s(40) },
   headline: { fontSize: fontSize(22), fontFamily: FONTS.heading, color: EARTHY.bark, marginBottom: s(8) },
   subtext: { fontSize: fontSize(14), fontFamily: FONTS.bodyLight, color: EARTHY.stone, lineHeight: fontSize(20), marginBottom: s(24) },
   card: { backgroundColor: EARTHY.white, borderRadius: s(14), padding: s(16), borderWidth: 1, borderColor: EARTHY.sand, marginBottom: s(12) },
@@ -167,9 +211,10 @@ const styles = StyleSheet.create({
   connectedBadge: { flexDirection: "row", alignItems: "center", gap: s(6) },
   statusDot: { width: s(8), height: s(8), borderRadius: s(4), backgroundColor: "#3A7D6E" },
   connectedText: { fontSize: fontSize(13), fontFamily: FONTS.bodyMedium, color: "#2B5E52" },
+  locationText: { fontSize: fontSize(13), fontFamily: FONTS.body, color: EARTHY.barkSoft },
   connectButton: { backgroundColor: ACCENT, borderRadius: s(10), padding: s(12), alignItems: "center" },
   connectButtonText: { color: EARTHY.white, fontSize: fontSize(14), fontFamily: FONTS.bodyMedium },
-  footer: { marginTop: "auto", paddingBottom: s(40) },
+  footer: { marginTop: s(24) },
   continueButton: { backgroundColor: ACCENT, borderRadius: s(14), padding: s(16), alignItems: "center" },
   continueButtonText: { color: EARTHY.white, fontSize: fontSize(16), fontFamily: FONTS.bodyMedium },
   skipButton: { alignItems: "center", paddingVertical: s(14) },

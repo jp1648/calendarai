@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
+import { useRouter } from "expo-router";
 import { supabase } from "../lib/supabase";
 import { useChatStore } from "../stores/chatStore";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
@@ -50,6 +52,7 @@ export function useAuth() {
   const signOut = async () => {
     useChatStore.getState().reset();
     await supabase.auth.signOut();
+    router.replace("/(auth)/login");
   };
 
   return { session, loading, signUp, signIn, signOut };
