@@ -18,6 +18,7 @@ class ProfileResponse(BaseModel):
     gmail_connected: bool
     resy_connected: bool
     ical_feed_token: str
+    onboarding_completed: bool
 
 
 class ProfileUpdate(BaseModel):
@@ -25,6 +26,7 @@ class ProfileUpdate(BaseModel):
     phone: str | None = Field(None, max_length=20, pattern=r"^(\+?\d[\d\s\-().]{0,18})?$")
     timezone: str | None = Field(None, max_length=50)
     default_location: str | None = Field(None, max_length=200)
+    onboarding_completed: bool | None = None
 
 
 @router.get("", response_model=ProfileResponse)
@@ -32,7 +34,7 @@ async def get_profile(user: AuthUser = Depends(get_current_user)):
     sb = get_supabase_admin()
     result = (
         sb.table("profiles")
-        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token")
+        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token, onboarding_completed")
         .eq("id", user.id)
         .maybe_single()
         .execute()
@@ -59,7 +61,7 @@ async def update_profile(
 
     result = (
         sb.table("profiles")
-        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token")
+        .select("full_name, phone, timezone, default_location, email, gmail_connected, resy_connected, ical_feed_token, onboarding_completed")
         .eq("id", user.id)
         .single()
         .execute()

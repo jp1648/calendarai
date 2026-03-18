@@ -4,6 +4,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 
 LogBox.ignoreLogs([
   "expo-notifications",
+  "AuthApiError",
+  "Invalid Refresh Token",
 ]);
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -59,11 +61,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === "(auth)";
     const inOnboardingGroup = segments[0] === "(onboarding)";
     if (!session && !inAuthGroup) {
-      router.replace("/(auth)/login");
+      router.replace("/(auth)/name");
     } else if (session && profileLoaded) {
-      const profile = queryClient.getQueryData<{ full_name: string }>(["profile"]);
-      if (!profile?.full_name) {
-        if (!inOnboardingGroup) router.replace("/(onboarding)/welcome");
+      const profile = queryClient.getQueryData<{ onboarding_completed: boolean }>(["profile"]);
+      if (!profile?.onboarding_completed) {
+        if (!inOnboardingGroup) router.replace("/(onboarding)/connect");
       } else if (inAuthGroup || inOnboardingGroup) {
         router.replace("/(app)");
       }
