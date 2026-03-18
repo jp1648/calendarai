@@ -1,7 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, StyleSheet } from "react-native";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, FONTS } from "../../lib/theme";
+import BackButton from "./BackButton";
 
 interface ScreenHeaderProps {
   /** Left content — set to "back" for a standard back button, or pass custom JSX */
@@ -13,26 +13,12 @@ interface ScreenHeaderProps {
 }
 
 export default function ScreenHeader({ left, title, right }: ScreenHeaderProps) {
-  const router = useRouter();
-
-  const goBack = () => {
-    try {
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace("/(app)");
-      }
-    } catch {
-      router.replace("/(app)");
-    }
-  };
-
   const renderLeft = () => {
     if (left === "back") {
       return (
-        <TouchableOpacity onPress={goBack} activeOpacity={0.6} style={styles.side}>
-          <Text style={styles.backText}>{"\u276E"}  Back</Text>
-        </TouchableOpacity>
+        <View style={styles.side}>
+          <BackButton />
+        </View>
       );
     }
     return <View style={styles.side}>{left}</View>;
@@ -71,10 +57,5 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: EARTHY.bark,
     textAlign: "center",
-  },
-  backText: {
-    color: EARTHY.barkSoft,
-    fontSize: fontSize(13),
-    fontFamily: FONTS.bodyMedium,
   },
 });
