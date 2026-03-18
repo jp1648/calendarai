@@ -17,6 +17,7 @@ export default function NameScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
+  const canContinue = !!firstName.trim() && !!lastName.trim();
 
   const handleContinue = () => {
     setError("");
@@ -76,9 +77,9 @@ export default function NameScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity
-            style={[styles.button, (!firstName.trim() || !lastName.trim()) && styles.buttonDisabled]}
+            style={[styles.button, !canContinue && styles.buttonDisabled]}
             onPress={handleContinue}
-            disabled={!firstName.trim() || !lastName.trim()}
+            disabled={!canContinue}
           >
             <Text style={styles.buttonText}>Continue</Text>
           </TouchableOpacity>

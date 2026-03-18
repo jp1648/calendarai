@@ -60,7 +60,7 @@ export default function PermissionsScreen() {
 
   const handleGetStarted = async () => {
     try {
-      await api.profile.update({ onboarding_completed: true } as any);
+      await api.profile.update({ onboarding_completed: true });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch {}
     router.replace("/(app)");

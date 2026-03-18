@@ -11,29 +11,25 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
-import { api } from "../../lib/api";
+import { api, Profile } from "../../lib/api";
 import * as Clipboard from "expo-clipboard";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
-interface Profile {
-  full_name: string;
-  phone: string;
-  timezone: string;
-  default_location: string;
-  email: string;
-  gmail_connected: boolean;
-  resy_connected: boolean;
-  ical_feed_token: string;
-}
-
 export default function SettingsScreen() {
+  const router = useRouter();
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace("/(auth)/login");
+  };
   const { data: profile, isLoading: loading } = useQuery<Profile>({
     queryKey: ["profile"],
     queryFn: () => api.profile.get(),
@@ -86,6 +82,8 @@ export default function SettingsScreen() {
     try {
       const { url } = await api.gmail.getAuthUrl();
       Linking.openURL(url);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 5000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 15000);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
@@ -289,7 +287,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
+      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
 

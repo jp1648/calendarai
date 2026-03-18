@@ -10,8 +10,8 @@ import {
   Alert,
 } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
-import { api } from "../../lib/api";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 import { isValidEmail, normalizeEmail, validatePassword } from "../../lib/validation";
@@ -51,14 +51,12 @@ export default function SignupScreen() {
     if (!allRulesPassed) return;
     setLoading(true);
     try {
-      await signUp(trimmedEmail, password);
-      // Save name to profile if provided from name screen
+      // Store name for the connect screen to save (session may not be ready yet)
       if (firstName || lastName) {
         const fullName = [firstName, lastName].filter(Boolean).join(" ");
-        try {
-          await api.profile.update({ full_name: fullName });
-        } catch {}
+        await AsyncStorage.setItem("pending_full_name", fullName);
       }
+      await signUp(trimmedEmail, password);
     } catch (e: any) {
       setError(e.message);
     } finally {

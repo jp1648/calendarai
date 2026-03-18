@@ -40,6 +40,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json();
 }
 
+export interface Profile {
+  full_name: string;
+  phone: string;
+  timezone: string;
+  default_location: string;
+  email: string;
+  gmail_connected: boolean;
+  resy_connected: boolean;
+  ical_feed_token: string;
+  onboarding_completed: boolean;
+}
+
 export const api = {
   events: {
     list: (start?: string, end?: string) => {
@@ -140,22 +152,13 @@ export const api = {
     unlink: () => request<{ status: string }>("/api/resy/unlink", { method: "POST" }),
   },
   profile: {
-    get: () =>
-      request<{
-        full_name: string;
-        phone: string;
-        timezone: string;
-        default_location: string;
-        email: string;
-        gmail_connected: boolean;
-        resy_connected: boolean;
-        ical_feed_token: string;
-      }>("/api/profile"),
+    get: () => request<Profile>("/api/profile"),
     update: (data: {
       full_name?: string;
       phone?: string;
       timezone?: string;
       default_location?: string;
+      onboarding_completed?: boolean;
     }) =>
       request<any>("/api/profile", {
         method: "PATCH",

@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
@@ -35,6 +36,19 @@ export default function ConnectScreen() {
   const locationDenied = locationEnabled && !!locationError;
 
   const locationSaved = useRef(false);
+  const nameSaved = useRef(false);
+
+  // Save pending name from signup (session is now guaranteed)
+  useEffect(() => {
+    if (nameSaved.current) return;
+    nameSaved.current = true;
+    AsyncStorage.getItem("pending_full_name").then((name) => {
+      if (name) {
+        api.profile.update({ full_name: name }).catch(() => {});
+        AsyncStorage.removeItem("pending_full_name");
+      }
+    });
+  }, []);
 
   const handleLocationPress = useCallback(() => {
     setLocationEnabled(true);
@@ -50,7 +64,7 @@ export default function ConnectScreen() {
 
   const handleGetStarted = async () => {
     try {
-      await api.profile.update({ onboarding_completed: true } as any);
+      await api.profile.update({ onboarding_completed: true });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch {}
     router.replace("/(app)");
