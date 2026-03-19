@@ -17,7 +17,7 @@ def _ensure_tz(dt: datetime, user_tz: str) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=tz)
     elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
-        dt = dt.replace(tzinfo=tz)
+        dt = dt.astimezone(tz)
     return dt.isoformat()
 
 

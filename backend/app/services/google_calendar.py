@@ -45,8 +45,15 @@ def list_events(
     if time_max:
         kwargs["timeMax"] = time_max
 
-    result = service.events().list(**kwargs).execute()
-    return result.get("items", [])
+    items: list[dict] = []
+    while True:
+        result = service.events().list(**kwargs).execute()
+        items.extend(result.get("items", []))
+        page_token = result.get("nextPageToken")
+        if not page_token:
+            break
+        kwargs["pageToken"] = page_token
+    return items
 
 
 def create_event(creds: Credentials, calendar_id: str, event_body: dict) -> dict:

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 import logging
@@ -79,8 +80,8 @@ class AgentRunner:
     ) -> AgentDeps:
         """Build AgentDeps from user info, fetching profile data."""
         sb = get_supabase_admin()
-        profile = (
-            sb.table("profiles")
+        profile = await asyncio.to_thread(
+            lambda: sb.table("profiles")
             .select("timezone, full_name, phone, default_location, gmail_connected, gmail_refresh_token, resy_connected, resy_auth_token")
             .eq("id", user_id)
             .single()
@@ -94,16 +95,16 @@ class AgentRunner:
             try:
                 refresh_token = decrypt(data["gmail_refresh_token"])
                 gmail_credentials = get_gmail_credentials(refresh_token)
-            except Exception:
-                pass  # Gmail tools will gracefully fail if creds unavailable
+            except Exception as e:
+                logger.warning("Failed to decrypt Gmail credentials for user=%s: %s", user_id, e)
 
         # Decrypt Resy auth token if connected
         resy_token = None
         if data.get("resy_connected") and data.get("resy_auth_token"):
             try:
                 resy_token = decrypt(data["resy_auth_token"])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to decrypt Resy token for user=%s: %s", user_id, e)
 
         return AgentDeps(
             user_id=user_id,
@@ -159,7 +160,7 @@ class AgentRunner:
 
             # Gather created events
             events = self._fetch_created_events(
-                sb, user_id, request.agent_name, start_time=elapsed
+                sb, user_id, request.agent_name
             )
 
             # Extract token usage
@@ -330,9 +331,10 @@ class AgentRunner:
         except Exception as e:
             self._log_fail(sb, run_id, str(e))
             logger.error(
-                "agent=%s status=stream_failed error=%s", agent_name, str(e)[:200]
+                "agent=%s status=stream_failed error=%s", agent_name, str(e)[:200],
+                exc_info=True,
             )
-            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            yield f"event: error\ndata: {json.dumps({'error': 'Something went wrong. Please try again.'})}\n\n"
 
         finally:
             await self._cleanup_browser(deps)
@@ -367,7 +369,7 @@ class AgentRunner:
         }).eq("id", run_id).execute()
 
     def _fetch_created_events(
-        self, sb, user_id: str, agent_name: str, start_time: float = 0, since: str | None = None,
+        self, sb, user_id: str, agent_name: str, since: str | None = None,
     ) -> list[dict]:
         """Fetch events created by this agent run (most recent, matching source)."""
         source_map = {

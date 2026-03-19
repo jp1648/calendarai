@@ -1,3 +1,5 @@
+import time
+
 import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -9,6 +11,8 @@ from app.config import get_settings
 security = HTTPBearer()
 
 _jwks_cache: dict | None = None
+_jwks_cache_time: float = 0
+_JWKS_TTL = 3600  # Re-fetch keys every hour
 
 
 class AuthUser(BaseModel):
@@ -16,9 +20,9 @@ class AuthUser(BaseModel):
     email: str
 
 
-async def _get_jwks() -> dict:
-    global _jwks_cache
-    if _jwks_cache:
+async def _get_jwks(force_refresh: bool = False) -> dict:
+    global _jwks_cache, _jwks_cache_time
+    if _jwks_cache and not force_refresh and (time.monotonic() - _jwks_cache_time) < _JWKS_TTL:
         return _jwks_cache
     settings = get_settings()
     jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
@@ -26,6 +30,7 @@ async def _get_jwks() -> dict:
         resp = await client.get(jwks_url)
         resp.raise_for_status()
         _jwks_cache = resp.json()
+        _jwks_cache_time = time.monotonic()
     return _jwks_cache
 
 
@@ -40,6 +45,14 @@ async def validate_token(token: str) -> AuthUser:
             if k["kid"] == header.get("kid"):
                 key = k
                 break
+
+        # Key not found — may be rotated, refetch once
+        if not key:
+            jwks = await _get_jwks(force_refresh=True)
+            for k in jwks.get("keys", []):
+                if k["kid"] == header.get("kid"):
+                    key = k
+                    break
 
         if not key:
             raise HTTPException(
