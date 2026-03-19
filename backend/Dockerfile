@@ -11,6 +11,9 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies (no dev deps in production)
 RUN uv sync --frozen --no-dev
 
+# Install playwright browsers for BrowserBase
+RUN uv run playwright install chromium --with-deps
+
 # Copy application code
 COPY app/ app/
 
@@ -19,5 +22,9 @@ RUN addgroup --system app && adduser --system --ingroup app app
 USER app
 
 EXPOSE ${PORT:-8000}
+
+# Health check for Railway
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/api/health')" || exit 1
 
 CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
