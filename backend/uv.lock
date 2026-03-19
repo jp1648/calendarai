@@ -363,7 +363,6 @@ name = "calendarai-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "beautifulsoup4" },
     { name = "browser-use" },
     { name = "browserbase" },
     { name = "email-validator" },
@@ -396,7 +395,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "browser-use", specifier = ">=0.12.1" },
     { name = "browserbase", specifier = ">=1.0" },
     { name = "email-validator", specifier = ">=2.3.0" },
