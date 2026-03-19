@@ -17,7 +17,6 @@ _CORE_TOOLS = [
     # Search
     "web_search",
     "web_extract",
-    "http_extract",
 ]
 
 _BOOKING_TOOLS = [
@@ -105,8 +104,8 @@ IF user asks about something you don't know (hours, addresses, events):
 → web_search immediately.
 
 IF you need to read a specific web page (menu, details, hours):
-→ http_extract first (fast, free). Only use browse_page if http_extract returns \
-empty or error (JS-only page).
+→ web_extract (Tavily). Only use browse_page for interactive flows (filling forms, \
+clicking buttons, completing bookings).
 
 ## Booking
 
