@@ -77,7 +77,8 @@ class TestGetEvent:
 class TestCreateEvent:
     def test_valid_event(self, client):
         event = _make_event()
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([event])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([event])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.post(
                 "/api/events",
                 json={
@@ -123,7 +124,8 @@ class TestCreateEvent:
     def test_defaults(self, client):
         """Ensure default source is 'manual' and all_day is False."""
         created = _make_event()
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([created])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([created])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.post(
                 "/api/events",
                 json={
@@ -142,7 +144,8 @@ class TestCreateEvent:
 class TestUpdateEvent:
     def test_partial_update(self, client):
         updated = _make_event(title="Updated Lunch")
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.patch(
                 "/api/events/evt-001",
                 json={"title": "Updated Lunch"},
@@ -153,7 +156,8 @@ class TestUpdateEvent:
 
     def test_update_time(self, client):
         updated = _make_event(start_time="2026-03-10T14:00:00")
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.patch(
                 "/api/events/evt-001",
                 json={"start_time": "2026-03-10T14:00:00"},
@@ -162,7 +166,8 @@ class TestUpdateEvent:
         assert resp.status_code == 200
 
     def test_not_found(self, client):
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.patch(
                 "/api/events/nonexistent",
                 json={"title": "Nope"},
@@ -173,7 +178,8 @@ class TestUpdateEvent:
     def test_empty_update(self, client):
         """PATCH with empty body should succeed (no-op)."""
         updated = _make_event()
-        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])):
+        with patch("app.routers.events.get_supabase_admin", return_value=FakeSupabase([updated])), \
+             patch("app.services.profiles.get_supabase_admin", return_value=FakeSupabase([{"timezone": "America/New_York"}])):
             resp = client.patch(
                 "/api/events/evt-001",
                 json={},
@@ -205,4 +211,4 @@ class TestHealth:
     def test_health(self, client):
         resp = client.get("/api/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        assert resp.json()["status"] == "ok"

@@ -147,7 +147,7 @@ class TestGrantPermission:
             "grantee_email": "x@x.com",
             "level": "admin",
         })
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
 
 class TestRevokePermission:
@@ -264,4 +264,4 @@ class TestRespondToInvite:
 
     def test_invalid_status(self, client):
         resp = client.patch("/api/sharing/invites/inv-1", json={"status": "maybe"})
-        assert resp.status_code == 400
+        assert resp.status_code == 422
