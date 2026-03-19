@@ -14,51 +14,6 @@ BOOKING_CATEGORIES: dict[str, dict] = {
         ],
         "workflow_tools": ["find_restaurant", "book_restaurant"],
     },
-    "doctor": {
-        "label": "Doctor",
-        "search_sites": ["zocdoc.com", "healthgrades.com", "webmd.com"],
-        "required_info": ["specialty or reason for visit", "location", "preferred date/time", "insurance (optional)"],
-        "default_duration_hours": 1,
-        "title_template": "Doctor Appointment — {business_name}",
-        "keywords": ["doctor", "physician", "medical", "checkup", "specialist", "dermatologist", "cardiologist"],
-        "providers": [
-            {"name": "Zocdoc", "method": "browser"},
-        ],
-    },
-    "dentist": {
-        "label": "Dentist",
-        "search_sites": ["zocdoc.com", "yelp.com", "healthgrades.com"],
-        "required_info": ["type of visit (cleaning, checkup, etc.)", "location", "preferred date/time"],
-        "default_duration_hours": 1,
-        "title_template": "Dentist — {business_name}",
-        "keywords": ["dentist", "dental", "teeth", "cleaning", "orthodontist", "oral"],
-        "providers": [
-            {"name": "Zocdoc", "method": "browser"},
-        ],
-    },
-    "haircut": {
-        "label": "Haircut / Salon",
-        "search_sites": ["yelp.com", "booksy.com", "vagaro.com"],
-        "required_info": ["service type (haircut, color, etc.)", "location", "preferred date/time"],
-        "default_duration_hours": 1,
-        "title_template": "Haircut at {business_name}",
-        "keywords": ["haircut", "barber", "salon", "hair", "stylist", "trim", "color"],
-        "providers": [
-            {"name": "Booksy", "method": "browser"},
-            {"name": "Vagaro", "method": "browser"},
-        ],
-    },
-    "auto_service": {
-        "label": "Auto Service",
-        "search_sites": ["yelp.com", "repairpal.com", "google.com"],
-        "required_info": ["service type (oil change, inspection, etc.)", "vehicle info (optional)", "location", "preferred date/time"],
-        "default_duration_hours": 2,
-        "title_template": "Auto Service — {business_name}",
-        "keywords": ["mechanic", "oil change", "auto", "car service", "tire", "inspection", "brake"],
-        "providers": [
-            {"name": "RepairPal", "method": "browser"},
-        ],
-    },
     "fitness": {
         "label": "Fitness Class",
         "search_sites": ["classpass.com", "mindbody.com", "yelp.com"],
