@@ -48,6 +48,16 @@ async def sync_google_calendar(
         created = 0
         updated = 0
 
+        # Batch-fetch all existing source_refs to avoid N+1 queries
+        existing_result = (
+            sb.table("events")
+            .select("id, source_ref")
+            .eq("user_id", ctx.deps.user_id)
+            .eq("source", "google_calendar")
+            .execute()
+        )
+        ref_map = {row["source_ref"]: row["id"] for row in existing_result.data or []}
+
         for ge in gcal_events:
             if ge.get("status") == "cancelled":
                 continue
@@ -73,18 +83,11 @@ async def sync_google_calendar(
                 "confidence": 1.0,
             }
 
-            existing = (
-                sb.table("events")
-                .select("id")
-                .eq("user_id", ctx.deps.user_id)
-                .eq("source", "google_calendar")
-                .eq("source_ref", ge["id"])
-                .execute()
-            )
+            existing_id = ref_map.get(ge["id"])
 
-            if existing.data:
+            if existing_id:
                 update_data = {k: v for k, v in row.items() if k not in ("user_id", "source", "source_ref", "confidence")}
-                sb.table("events").update(update_data).eq("id", existing.data[0]["id"]).execute()
+                sb.table("events").update(update_data).eq("id", existing_id).execute()
                 updated += 1
             else:
                 sb.table("events").insert(row).execute()

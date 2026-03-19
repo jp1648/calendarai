@@ -8,6 +8,7 @@ import json
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.auth.middleware import AuthUser, get_current_user
+from app.services.profiles import get_user_tz as _get_user_tz
 from app.services.supabase import get_supabase_admin
 
 
@@ -19,12 +20,6 @@ def _ensure_tz(dt: datetime, user_tz: str) -> str:
     elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
         dt = dt.astimezone(tz)
     return dt.isoformat()
-
-
-def _get_user_tz(user_id: str) -> str:
-    sb = get_supabase_admin()
-    result = sb.table("profiles").select("timezone").eq("id", user_id).single().execute()
-    return (result.data or {}).get("timezone", "America/New_York")
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 

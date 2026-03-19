@@ -20,7 +20,7 @@ def _ensure_tz(dt_str: str, user_tz: str) -> str:
         dt = dt.replace(tzinfo=tz)
     elif dt.utcoffset() == timedelta(0) and user_tz != "UTC":
         # Agent sent UTC but user isn't in UTC — treat as user-local
-        dt = dt.replace(tzinfo=tz)
+        dt = dt.astimezone(tz)
     return dt.isoformat()
 
 

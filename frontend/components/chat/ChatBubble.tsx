@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     width: s(6),
     height: s(6),
     borderRadius: s(3),
-    backgroundColor: "#3A7D6E",
+    backgroundColor: EARTHY.success,
     marginTop: s(6),
     flexShrink: 0,
   },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderColor: "#8C4646",
   },
   errorText: {
-    color: "#7A3D3D",
+    color: EARTHY.errorDark,
     fontSize: fs(13),
     lineHeight: fs(18),
     fontFamily: FONTS.body,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   retryText: {
-    color: "#7A3D3D",
+    color: EARTHY.errorDark,
     fontSize: fs(13),
     fontFamily: FONTS.bodyMedium,
     textDecorationLine: "underline",

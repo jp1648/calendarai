@@ -1,8 +1,12 @@
+import logging
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
 from app.config import get_settings
+
+logger = logging.getLogger("calendarai.services.gmail")
 
 
 def get_oauth_flow() -> Flow:
@@ -57,7 +61,8 @@ def get_history(credentials: Credentials, history_id: str) -> list[str]:
             .list(userId="me", startHistoryId=history_id, historyTypes=["messageAdded"])
             .execute()
         )
-    except Exception:
+    except Exception as e:
+        logger.warning("get_history failed: %s", e)
         return []
 
     message_ids = []

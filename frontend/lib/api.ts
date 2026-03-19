@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { CalendarEvent } from "../stores/eventStore";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -11,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
+export async function getAuthHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -59,16 +60,16 @@ export const api = {
       if (start) params.set("start", start);
       if (end) params.set("end", end);
       const qs = params.toString();
-      return request<any[]>(`/api/events${qs ? `?${qs}` : ""}`);
+      return request<CalendarEvent[]>(`/api/events${qs ? `?${qs}` : ""}`);
     },
-    get: (id: string) => request<any>(`/api/events/${id}`),
+    get: (id: string) => request<CalendarEvent>(`/api/events/${id}`),
     create: (data: any) =>
-      request<any>("/api/events", {
+      request<CalendarEvent>("/api/events", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     update: (id: string, data: any) =>
-      request<any>(`/api/events/${id}`, {
+      request<CalendarEvent>(`/api/events/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
@@ -86,14 +87,6 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ input }),
       }),
-    scheduleStream: async (input: string, thread_id?: string | null) => {
-      const headers = await getAuthHeaders();
-      return fetch(`${API_URL}/api/agents/schedule/stream`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ input, thread_id }),
-      });
-    },
     available: () => request<any>("/api/agents/available"),
   },
   gmail: {
@@ -160,7 +153,7 @@ export const api = {
       default_location?: string;
       onboarding_completed?: boolean;
     }) =>
-      request<any>("/api/profile", {
+      request<Profile>("/api/profile", {
         method: "PATCH",
         body: JSON.stringify(data),
       }),

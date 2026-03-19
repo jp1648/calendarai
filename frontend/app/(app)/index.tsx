@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { format, addMonths, subMonths } from "../../lib/dates";
+import { format } from "../../lib/dates";
 import { dismissKeyboardOr } from "../../lib/keyboard";
 import { s, fontSize } from "../../lib/responsive";
 import { useEventsQuery } from "../../hooks/useEventsQuery";

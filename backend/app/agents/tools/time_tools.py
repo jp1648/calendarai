@@ -20,7 +20,7 @@ async def get_current_time(ctx: RunContext[AgentDeps]) -> str:
 async def parse_datetime(
     ctx: RunContext[AgentDeps],
     text: str,
-) -> str:
+) -> str | dict:
     """Parse a natural language date/time string into an ISO 8601 datetime.
 
     Args:
@@ -35,4 +35,4 @@ async def parse_datetime(
             parsed = parsed.replace(tzinfo=tz)
         return parsed.isoformat()
     except (ValueError, OverflowError):
-        return now.isoformat()
+        return {"error": f"Could not parse '{text}' as a date/time. Ask the user to clarify."}

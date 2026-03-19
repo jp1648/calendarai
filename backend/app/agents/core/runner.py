@@ -118,6 +118,28 @@ class AgentRunner:
             resy_auth_token=resy_token,
         )
 
+    def _build_user_input(self, deps: AgentDeps, raw_input: str, location: str | None = None) -> str:
+        """Build user input string with injected context (time, profile, location)."""
+        tz = ZoneInfo(deps.user_timezone)
+        now = datetime.now(tz)
+        context_parts = [
+            f"Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')}",
+            f"Timezone: {deps.user_timezone}",
+            f"ISO: {now.isoformat()}",
+        ]
+        if location:
+            context_parts.append(f"User location: {location}")
+        elif deps.user_default_location:
+            context_parts.append(f"User location: {deps.user_default_location}")
+        if deps.user_full_name:
+            context_parts.append(f"User name: {deps.user_full_name}")
+        if deps.user_phone:
+            context_parts.append(f"User phone: {deps.user_phone}")
+        context_parts.append(f"User email: {deps.user_email}")
+        if deps.resy_auth_token:
+            context_parts.append("Resy: connected")
+        return f"[{' | '.join(context_parts)}]\n\n{raw_input}"
+
     async def run(
         self,
         request: AgentRequest,
@@ -135,23 +157,7 @@ class AgentRunner:
         run_id = self._log_start(sb, user_id, request, config.model)
 
         # Inject current time + profile context
-        tz = ZoneInfo(deps.user_timezone)
-        now = datetime.now(tz)
-        context_parts = [
-            f"Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')}",
-            f"Timezone: {deps.user_timezone}",
-            f"ISO: {now.isoformat()}",
-        ]
-        if deps.user_default_location:
-            context_parts.append(f"User location: {deps.user_default_location}")
-        if deps.user_full_name:
-            context_parts.append(f"User name: {deps.user_full_name}")
-        if deps.user_phone:
-            context_parts.append(f"User phone: {deps.user_phone}")
-        context_parts.append(f"User email: {deps.user_email}")
-        if deps.resy_auth_token:
-            context_parts.append("Resy: connected")
-        user_input = f"[{' | '.join(context_parts)}]\n\n{request.input}"
+        user_input = self._build_user_input(deps, request.input)
 
         start = time.monotonic()
         try:
@@ -238,25 +244,7 @@ class AgentRunner:
         yield f"event: thread\ndata: {json.dumps({'thread_id': thread_id})}\n\n"
 
         # Inject current time + location + profile context
-        tz = ZoneInfo(deps.user_timezone)
-        now = datetime.now(tz)
-        context_parts = [
-            f"Current time: {now.strftime('%A, %B %d, %Y %I:%M %p')}",
-            f"Timezone: {deps.user_timezone}",
-            f"ISO: {now.isoformat()}",
-        ]
-        if location:
-            context_parts.append(f"User location: {location}")
-        elif deps.user_default_location:
-            context_parts.append(f"User location: {deps.user_default_location}")
-        if deps.user_full_name:
-            context_parts.append(f"User name: {deps.user_full_name}")
-        if deps.user_phone:
-            context_parts.append(f"User phone: {deps.user_phone}")
-        context_parts.append(f"User email: {deps.user_email}")
-        if deps.resy_auth_token:
-            context_parts.append("Resy: connected")
-        user_input = f"[{' | '.join(context_parts)}]\n\n{input_text}"
+        user_input = self._build_user_input(deps, input_text, location=location)
 
         request = AgentRequest(agent_name=agent_name, input=input_text)
         run_id = self._log_start(sb, user_id, request, config.model)

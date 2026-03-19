@@ -9,8 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from app.auth.middleware import AuthUser, get_current_user
-from app.services.encryption import decrypt
-from app.services.gmail import get_gmail_credentials
+from app.services.profiles import get_user_tz as _get_user_tz, get_user_credentials
 from app.services.google_calendar import (
     list_calendars as gc_list_calendars,
     list_events as gc_list_events,
@@ -28,24 +27,10 @@ router = APIRouter(prefix="/api/google-calendar", tags=["google-calendar"])
 
 def _get_credentials(user_id: str):
     """Load Google credentials for the user. Raises 400 if Gmail not connected."""
-    sb = get_supabase_admin()
-    profile = (
-        sb.table("profiles")
-        .select("gmail_connected, gmail_refresh_token")
-        .eq("id", user_id)
-        .single()
-        .execute()
-    )
-    if not profile.data or not profile.data.get("gmail_connected"):
+    creds = get_user_credentials(user_id)
+    if creds is None:
         raise HTTPException(status_code=400, detail="Gmail/Google not connected")
-    refresh_token = decrypt(profile.data["gmail_refresh_token"])
-    return get_gmail_credentials(refresh_token)
-
-
-def _get_user_tz(user_id: str) -> str:
-    sb = get_supabase_admin()
-    result = sb.table("profiles").select("timezone").eq("id", user_id).single().execute()
-    return (result.data or {}).get("timezone", "America/New_York")
+    return creds
 
 
 def _calendarai_event_to_gcal(event: dict) -> dict:

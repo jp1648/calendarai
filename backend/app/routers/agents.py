@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -6,6 +8,8 @@ from app.auth.middleware import AuthUser, get_current_user
 from app.auth.rate_limit import check_rate_limit
 from app.agents.core import AgentRequest, AgentResponse, AgentRunner, RunStatus, agent_registry
 from app.agents.core.router import pick_scheduler
+
+logger = logging.getLogger("calendarai.agents")
 
 
 class ScheduleRequest(BaseModel):
@@ -34,7 +38,8 @@ async def run_agent(
     response = await runner.run(body, user_id=user.id, user_email=user.email)
 
     if response.status == RunStatus.FAILED:
-        raise HTTPException(status_code=500, detail=response.message)
+        logger.error("agent=%s run failed: %s", body.agent_name, response.message)
+        raise HTTPException(status_code=500, detail="Agent run failed. Please try again.")
 
     return response
 
@@ -54,7 +59,8 @@ async def schedule_event(
     response = await runner.run(request, user_id=user.id, user_email=user.email)
 
     if response.status == RunStatus.FAILED:
-        raise HTTPException(status_code=500, detail=response.message)
+        logger.error("agent=%s schedule failed: %s", agent_name, response.message)
+        raise HTTPException(status_code=500, detail="Scheduling failed. Please try again.")
 
     return response
 
@@ -93,7 +99,7 @@ async def schedule_stream(
 
 
 @router.get("/available")
-async def list_agents():
+async def list_agents(user: AuthUser = Depends(get_current_user)):
     """List all registered agents and their configs."""
     agents = []
     for name in agent_registry.available:

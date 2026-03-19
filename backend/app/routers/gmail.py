@@ -1,9 +1,10 @@
 import base64
 import json
+import logging
 from datetime import datetime, timezone
 from urllib.parse import urlencode, urlparse, parse_qs, urlunparse
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,8 @@ from app.services.gmail import (
 )
 from app.services.encryption import encrypt, decrypt
 from app.services.supabase import get_supabase_admin
+
+logger = logging.getLogger("calendarai.gmail")
 
 router = APIRouter(prefix="/api/gmail", tags=["gmail"])
 runner = AgentRunner()
@@ -77,8 +80,8 @@ async def oauth_callback(code: str, state: str):
                     ).isoformat(),
                 }
             ).execute()
-        except Exception:
-            pass  # Watch is optional — Gmail tools still work without push
+        except Exception as e:
+            logger.warning("Gmail watch setup failed: %s", e)
 
     return RedirectResponse(url=settings.frontend_url + "/settings")
 
@@ -94,8 +97,13 @@ class PubSubMessage(BaseModel):
 
 
 @router.post("/webhook")
-async def gmail_webhook(body: PubSubMessage, background_tasks: BackgroundTasks):
+async def gmail_webhook(body: PubSubMessage, background_tasks: BackgroundTasks, token: str = Query("")):
     """Receives Gmail push notifications via Google Pub/Sub."""
+    settings = get_settings()
+    if settings.google_pubsub_verification_token:
+        if token != settings.google_pubsub_verification_token:
+            raise HTTPException(status_code=403, detail="Invalid verification token")
+
     data = json.loads(base64.b64decode(body.message.data).decode("utf-8"))
     email_address = data.get("emailAddress")
     history_id = data.get("historyId")

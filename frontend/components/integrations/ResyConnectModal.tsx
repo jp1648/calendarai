@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     marginBottom: s(8),
   },
   resyErrorText: {
-    color: "#7A3D3D",
+    color: EARTHY.errorDark,
     fontSize: fontSize(13),
     fontFamily: FONTS.body,
   },

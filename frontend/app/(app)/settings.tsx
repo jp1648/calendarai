@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     width: s(8),
     height: s(8),
     borderRadius: s(4),
-    backgroundColor: "#3A7D6E",
+    backgroundColor: EARTHY.success,
   },
   saveButton: {
     backgroundColor: ACCENT,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   signOutText: {
-    color: "#944B43",
+    color: EARTHY.errorSoft,
     fontSize: fontSize(15),
     fontFamily: FONTS.bodyMedium,
   },

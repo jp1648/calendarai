@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = ""
     google_pubsub_topic: str = ""
+    google_pubsub_verification_token: str = ""
 
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:8081"

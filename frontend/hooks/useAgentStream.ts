@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useChatStore } from "../stores/chatStore";
-import { supabase } from "../lib/supabase";
+import { getAuthHeaders } from "../lib/api";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -28,17 +28,6 @@ const TOOL_STATUS: Record<string, string> = {
   // Social
   send_booking_invite: "Sending invite",
 };
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error("Not authenticated");
-  return {
-    Authorization: `Bearer ${session.access_token}`,
-    "Content-Type": "application/json",
-  };
-}
 
 export interface StreamResult {
   eventsCreated: any[];

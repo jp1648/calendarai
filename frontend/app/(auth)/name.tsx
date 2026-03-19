@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: fontSize(13),
     fontFamily: FONTS.body,
-    color: "#B44040",
+    color: EARTHY.error,
     paddingHorizontal: s(4),
   },
 });

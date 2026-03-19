@@ -11,6 +11,11 @@ export const EARTHY = {
   stoneLight: "#B8C4C9",
   fog: "#D4DDE0",
   white: "#FAFCFD",
+  success: "#3A7D6E",
+  successText: "#2B5E52",
+  error: "#B44040",
+  errorSoft: "#944B43",
+  errorDark: "#7A3D3D",
 } as const;
 
 export const ACCENT = "#024059";

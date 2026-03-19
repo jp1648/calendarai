@@ -10,7 +10,7 @@ import Animated, {
   FadeInDown,
 } from "react-native-reanimated";
 import { CalendarEvent } from "../../stores/eventStore";
-import { format, parseISO, isSameDay, formatTime as _ft } from "../../lib/dates";
+import { format, parseISO, isSameDay } from "../../lib/dates";
 
 /** Duration in minutes between two ISO timestamps */
 function durationMins(startIso: string, endIso: string): number {

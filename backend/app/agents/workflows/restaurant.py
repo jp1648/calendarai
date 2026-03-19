@@ -379,15 +379,16 @@ async def book_restaurant(
 
     # --- Create calendar event ---
     if date and time:
+        from datetime import datetime as dt, timedelta
         from app.agents.tools.calendar_tools import create_event
 
-        hour = int(time.split(":")[0])
-        end_hour = hour + 2
+        start_dt = dt.fromisoformat(f"{date}T{time}:00")
+        end_dt = start_dt + timedelta(hours=2)
         event = await create_event(
             ctx,
             title=f"Dinner at {restaurant_name} ({party_size} guests)",
-            start_time=f"{date}T{time}:00",
-            end_time=f"{date}T{end_hour:02d}:{time.split(':')[1]}:00",
+            start_time=start_dt.isoformat(),
+            end_time=end_dt.isoformat(),
             location=address,
             description=f"Booked via {platform.title()} · Party of {party_size}",
         )

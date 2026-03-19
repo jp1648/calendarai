@@ -214,12 +214,12 @@ const styles = StyleSheet.create({
     color: EARTHY.stone,
   },
   ruleTextPassed: {
-    color: "#3A7D6E",
+    color: EARTHY.success,
   },
   errorText: {
     fontSize: fontSize(13),
     fontFamily: FONTS.body,
-    color: "#B44040",
+    color: EARTHY.error,
     paddingHorizontal: s(4),
   },
 });

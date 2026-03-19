@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { CalendarEvent } from "./eventStore";
 
 export type ChatMessage =
   | { role: "user"; content: string }
@@ -27,7 +28,7 @@ interface ChatStore {
   addEventCard: (event: ChatMessage & { role: "event_card" }) => void;
   setThinking: (t: boolean) => void;
   setStatusText: (text: string) => void;
-  setDone: (events: any[]) => void;
+  setDone: (events: CalendarEvent[]) => void;
   reset: () => void;
   setOpen: (open: boolean) => void;
   setThreadId: (id: string) => void;

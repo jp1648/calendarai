@@ -1,5 +1,6 @@
 """Calendar sharing & booking invites API."""
 
+from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -143,7 +144,7 @@ async def respond_to_invite(
         event_id = event.data[0]["id"]
 
     # Update invite status
-    update = {"status": body.status, "responded_at": "now()"}
+    update = {"status": body.status, "responded_at": datetime.now(timezone.utc).isoformat()}
     if event_id:
         update["event_id"] = event_id
     sb.table("booking_invites").update(update).eq("id", invite_id).execute()

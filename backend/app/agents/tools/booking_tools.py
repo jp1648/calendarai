@@ -40,15 +40,13 @@ async def create_booking_event(
         confirmation_number: Booking confirmation number if available
         notes: Additional notes (insurance info, service details, etc.)
     """
+    from datetime import datetime as dt, timedelta
     from app.agents.tools.calendar_tools import create_event
 
-    start_time = f"{date}T{time}:00"
-    # Calculate end time
-    hour, minute = int(time.split(":")[0]), int(time.split(":")[1])
-    total_minutes = hour * 60 + minute + int(duration_hours * 60)
-    end_hour = total_minutes // 60
-    end_minute = total_minutes % 60
-    end_time = f"{date}T{end_hour:02d}:{end_minute:02d}:00"
+    start_dt = dt.fromisoformat(f"{date}T{time}:00")
+    end_dt = start_dt + timedelta(hours=duration_hours)
+    start_time = start_dt.isoformat()
+    end_time = end_dt.isoformat()
 
     # Build description from booking metadata
     description_parts = []

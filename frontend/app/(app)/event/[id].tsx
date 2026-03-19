@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
   },
   deleteText: {
-    color: "#944B43",
+    color: EARTHY.errorSoft,
     fontSize: fontSize(15),
     fontFamily: FONTS.bodyMedium,
   },

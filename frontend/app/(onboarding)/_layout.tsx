@@ -1,7 +1,8 @@
 import { Stack } from "expo-router";
+import { EARTHY } from "../../lib/theme";
 
 export default function OnboardingLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F2F5F7" } }} />
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: EARTHY.cream } }} />
   );
 }

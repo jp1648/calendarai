@@ -16,7 +16,7 @@ export interface CalendarEvent {
   confidence: number;
   undo_available: boolean;
   undo_expires_at: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 
