@@ -16,6 +16,7 @@ import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
 import { useLocation } from "../../hooks/useLocation";
 import { api } from "../../lib/api";
+import { pollForProfileUpdate } from "../../lib/polling";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
 
@@ -84,9 +85,7 @@ export default function ConnectScreen() {
     try {
       const { url } = await api.gmail.getAuthUrl();
       Linking.openURL(url);
-      // Poll for profile update after OAuth window opens
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 5000);
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 15000);
+      pollForProfileUpdate(queryClient);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }

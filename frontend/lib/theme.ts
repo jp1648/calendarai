@@ -16,6 +16,7 @@ export const EARTHY = {
   error: "#B44040",
   errorSoft: "#944B43",
   errorDark: "#7A3D3D",
+  overlay: "rgba(1,35,64,0.18)",
 } as const;
 
 export const ACCENT = "#024059";

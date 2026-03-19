@@ -17,11 +17,14 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error("Not authenticated");
-  return {
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${session.access_token}`,
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "1",
   };
+  if (__DEV__) {
+    headers["ngrok-skip-browser-warning"] = "1";
+  }
+  return headers;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -39,6 +42,37 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json();
+}
+
+export interface CreateEventInput {
+  title: string;
+  description?: string;
+  location?: string;
+  start_time: string;
+  end_time: string;
+  all_day?: boolean;
+  source?: string;
+  source_ref?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateEventInput {
+  title?: string;
+  description?: string;
+  location?: string;
+  start_time?: string;
+  end_time?: string;
+  all_day?: boolean;
+}
+
+export interface AgentResponse {
+  run_id: string;
+  agent_name: string;
+  status: string;
+  message: string;
+  events_created: CalendarEvent[];
+  tokens_used: number | null;
+  model_used: string;
 }
 
 export interface Profile {
@@ -63,12 +97,12 @@ export const api = {
       return request<CalendarEvent[]>(`/api/events${qs ? `?${qs}` : ""}`);
     },
     get: (id: string) => request<CalendarEvent>(`/api/events/${id}`),
-    create: (data: any) =>
+    create: (data: CreateEventInput) =>
       request<CalendarEvent>("/api/events", {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    update: (id: string, data: any) =>
+    update: (id: string, data: UpdateEventInput) =>
       request<CalendarEvent>(`/api/events/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
@@ -78,16 +112,16 @@ export const api = {
   },
   agents: {
     run: (agent_name: string, input: string) =>
-      request<any>("/api/agents/run", {
+      request<AgentResponse>("/api/agents/run", {
         method: "POST",
         body: JSON.stringify({ agent_name, input }),
       }),
     schedule: (input: string) =>
-      request<any>("/api/agents/schedule", {
+      request<AgentResponse>("/api/agents/schedule", {
         method: "POST",
         body: JSON.stringify({ input }),
       }),
-    available: () => request<any>("/api/agents/available"),
+    available: () => request<{ name: string; model: string; tools: string[] }[]>("/api/agents/available"),
   },
   gmail: {
     getAuthUrl: () => request<{ url: string }>("/api/gmail/auth-url"),
@@ -103,7 +137,7 @@ export const api = {
       if (start) params.set("start", start);
       if (end) params.set("end", end);
       const qs = params.toString();
-      return request<any[]>(`/api/google-calendar/events${qs ? `?${qs}` : ""}`);
+      return request<CalendarEvent[]>(`/api/google-calendar/events${qs ? `?${qs}` : ""}`);
     },
     sync: (calendarId?: string, daysBack?: number, daysForward?: number) =>
       request<{ created: number; updated: number; skipped: number }>(

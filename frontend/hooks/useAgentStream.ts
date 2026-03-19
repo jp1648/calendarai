@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useChatStore } from "../stores/chatStore";
 import { getAuthHeaders } from "../lib/api";
+import { CalendarEvent } from "../stores/eventStore";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -30,7 +31,7 @@ const TOOL_STATUS: Record<string, string> = {
 };
 
 export interface StreamResult {
-  eventsCreated: any[];
+  eventsCreated: CalendarEvent[];
   runId: string | null;
   hadToolCalls: boolean;
 }
@@ -42,7 +43,7 @@ export interface StreamResult {
 function processSSEBuffer(
   buffer: string,
   currentEvent: { value: string },
-  handler: (event: string, data: any) => void,
+  handler: (event: string, data: Record<string, unknown>) => void,
 ): string {
   const lines = buffer.split("\n");
   const remaining = lines.pop()!; // last incomplete line
@@ -52,7 +53,7 @@ function processSSEBuffer(
       currentEvent.value = line.slice(7).trim();
     } else if (line.startsWith("data: ")) {
       const raw = line.slice(6);
-      let data: any;
+      let data: Record<string, unknown>;
       try {
         data = JSON.parse(raw);
       } catch {
@@ -106,13 +107,13 @@ export function useAgentStream() {
       useChatStore.getState().addUserMessage(input);
       useChatStore.getState().setThinking(true);
 
-      let eventsCreated: any[] = [];
+      let eventsCreated: CalendarEvent[] = [];
       let runId: string | null = null;
       let hadToolCalls = false;
 
       try {
         const headers = await getAuthHeaders();
-        const body: Record<string, any> = {
+        const body: Record<string, unknown> = {
           input,
           thread_id: threadId,
         };
@@ -135,7 +136,7 @@ export function useAgentStream() {
           let lastProcessed = 0;
           const currentEvent = { value: "" };
 
-          const handleEvent = (eventName: string, data: any) => {
+          const handleEvent = (eventName: string, data: Record<string, unknown>) => {
             switch (eventName) {
               case "thread":
                 useChatStore.getState().setThreadId(data.thread_id);
@@ -241,10 +242,11 @@ export function useAgentStream() {
         });
 
         return { eventsCreated, runId, hadToolCalls };
-      } catch (e: any) {
+      } catch (e: unknown) {
         finalizeStreamingBubble();
+        const message = e instanceof Error ? e.message : "Connection error";
         useChatStore.setState((state) => ({
-          messages: [...state.messages, { role: "error" as const, content: e.message || "Connection error" }],
+          messages: [...state.messages, { role: "error" as const, content: message }],
         }));
         useChatStore.getState().setStreaming(false);
         return null;

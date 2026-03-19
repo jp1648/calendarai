@@ -65,7 +65,7 @@ export default function CalendarScreen() {
 
   const onEventPress = useCallback(
     dismissKeyboardOr((event: CalendarEvent) => {
-      router.push(`/(app)/event/${event.id}` as any);
+      router.push({ pathname: "/(app)/event/[id]", params: { id: event.id } });
     }),
     [router]
   );
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(1,35,64,0.18)",
+    backgroundColor: EARTHY.overlay,
     justifyContent: "center",
     alignItems: "center",
   },

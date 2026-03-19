@@ -7,7 +7,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { Link } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";

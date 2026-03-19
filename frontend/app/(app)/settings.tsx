@@ -17,6 +17,7 @@ import ScreenContainer from "../../components/ui/ScreenContainer";
 import ScreenHeader from "../../components/ui/ScreenHeader";
 import ResyConnectModal from "../../components/integrations/ResyConnectModal";
 import { api, Profile } from "../../lib/api";
+import { pollForProfileUpdate } from "../../lib/polling";
 import * as Clipboard from "expo-clipboard";
 import { s, fontSize } from "../../lib/responsive";
 import { EARTHY, ACCENT, FONTS } from "../../lib/theme";
@@ -82,8 +83,7 @@ export default function SettingsScreen() {
     try {
       const { url } = await api.gmail.getAuthUrl();
       Linking.openURL(url);
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 5000);
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["profile"] }), 15000);
+      pollForProfileUpdate(queryClient);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
