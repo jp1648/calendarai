@@ -11,9 +11,6 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies (no dev deps in production)
 RUN uv sync --frozen --no-dev
 
-# Install playwright browsers for BrowserBase
-RUN uv run playwright install chromium --with-deps
-
 # Copy application code
 COPY app/ app/
 
